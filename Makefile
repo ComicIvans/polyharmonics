@@ -12,10 +12,6 @@ else
 endif
 
 
-#* Docker variables
-IMAGE := polyharmonics
-VERSION := latest
-
 #* Installation
 .PHONY: install
 install:
@@ -52,23 +48,6 @@ lint: test check-codestyle
 
 .PHONY: lint-fix
 lint-fix: polish-codestyle
-
-#* Docker
-# Example: make docker-build VERSION=latest
-# Example: make docker-build IMAGE=some_name VERSION=0.0.1
-.PHONY: docker-build
-docker-build:
-	@echo Building docker $(IMAGE):$(VERSION) ...
-	docker build \
-		-t $(IMAGE):$(VERSION) . \
-		-f ./docker/Dockerfile --no-cache
-
-# Example: make docker-remove VERSION=latest
-# Example: make docker-remove IMAGE=some_name VERSION=0.0.1
-.PHONY: docker-remove
-docker-remove:
-	@echo Removing docker $(IMAGE):$(VERSION) ...
-	docker rmi -f $(IMAGE):$(VERSION)
 
 #* Cleaning
 .PHONY: pycache-remove

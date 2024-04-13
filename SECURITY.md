@@ -7,7 +7,7 @@
 
 Vulnerabilities can be reported by emailing core members:
 
-- UGR [isalidocobo@gmail.com](mailto:isalidocobo@gmail.com)
+- Iván Salido Cobo [isalidocobo@gmail.com](mailto:isalidocobo@gmail.com)
 
 Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
 
@@ -24,4 +24,4 @@ This information will help us triage your report more quickly.
 
 ## Preferred Languages
 
-We prefer all communications to be in English.
+We prefer all communications to be in Spanish or English.

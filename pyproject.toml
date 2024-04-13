@@ -6,25 +6,39 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "polyharmonics"
 version = "0.0.1"
-description = "Ortogonal Polynomials in the unit sphere."
+description = "Ortogonal polynomials in the unit sphere"
 readme = "README.md"
-authors = ["UGR <isalidocobo@gmail.com>"]
+authors = [
+  "Iván Salido Cobo <isalidocobo@gmail.com>",
+]
 license = "GNU GPL v3.0"
 repository = "https://github.com/ComicIvans/polyharmonics"
 homepage = "https://github.com/ComicIvans/polyharmonics"
 
 # Keywords description https://python-poetry.org/docs/pyproject/#keywords
-keywords = []  #! Update me
+keywords = [
+  "python",
+  "polynomials",
+  "unit sphere",
+  "orthogonal polynomials",
+  "mathematics",
+  "math",
+  "legendre polynomials",
+  "associated legendre functions",
+  "spherical harmonics",
+]
 
 # Pypi classifiers: https://pypi.org/classifiers/
-classifiers = [  #! Update me
-  "Development Status :: 3 - Alpha",
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Scientific/Engineering :: Mathematics",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
 ]
 
@@ -35,10 +49,12 @@ classifiers = [  #! Update me
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
-
-typer = {extras = ["all"], version = "^0.12.3"}
+python = "^3.9"
+matplotlib = "^3.8.4"
+sympy = "^1.12"
 rich = "^13.7.1"
+typer = "^0.12.3"
+numpy = "^1.26.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"

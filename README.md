@@ -1,10 +1,4 @@
-# Hey, Look at me! 👇
-
-**Please delete this part after you read it.**
-
-If you are first create this repository, please read [DELETE_ME.md](./DELETE_ME.md) to get started.
-
-# polyharmonics
+# Polyharmonics
 
 <div align="center">
 
@@ -38,7 +32,7 @@ conda activate polyharmonics
 pip install poetry
 ```
 
-Then you can run the client using the following command:
+Install with `make install`. Then you can run the client using the following command:
 
 ```bash
 polyharmonics --help
@@ -53,7 +47,6 @@ poetry run polyharmonics --help
 ### Makefile usage
 
 [`Makefile`](https://github.com/ComicIvans/polyharmonics/blob/main/Makefile) contains a lot of functions for faster development.
-
 
 <details>
 <summary>Install all dependencies and pre-commit hooks</summary>
@@ -243,7 +236,7 @@ This project is licensed under the terms of the `GNU GPL v3.0` license. See [LIC
 
 ```bibtex
 @misc{polyharmonics,
-  author = {UGR},
+  author = {Iván Salido Cobo},
   title = {Ortogonal Polynomials in the unit sphere.},
   year = {2024},
   publisher = {GitHub},
