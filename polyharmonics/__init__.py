@@ -4,6 +4,8 @@
 import sys
 from importlib import metadata as importlib_metadata
 
+from .legendre_polynomials import legendre
+
 
 def get_version() -> str:
     try:
