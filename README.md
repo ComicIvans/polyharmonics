@@ -25,14 +25,14 @@ Conda package manager is recommended. Create a conda environment.
 conda create -n polyharmonics python==3.10
 ```
 
-Activate conda environment and install poetry
+Activate conda environment and install the package
 
 ```bash
 conda activate polyharmonics
-pip install poetry
+pip install polyharmonics
 ```
 
-Install with `make install`. Then you can run the client using the following command:
+Then you can run the client using the following command:
 
 ```bash
 polyharmonics --help
