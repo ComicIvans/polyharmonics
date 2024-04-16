@@ -230,7 +230,7 @@ GitHub creates the `bug`, `enhancement`, and `documentation` labels for you. Dep
 
 [![License](https://img.shields.io/github/license/ComicIvans/polyharmonics)](https://github.com/ComicIvans/polyharmonics/blob/main/LICENSE)
 
-This project uses a `BSD` license. See [LICENSE](https://github.com/ComicIvans/polyharmonics/blob/main/LICENSE) for more details.
+This project uses the `BSD-3-Clause` license. See [LICENSE](https://github.com/ComicIvans/polyharmonics/blob/main/LICENSE) for more details.
 
 ## 📃 Citation
 
