@@ -11,7 +11,7 @@ readme = "README.md"
 authors = [
   "Iván Salido Cobo <isalidocobo@gmail.com>",
 ]
-license = "GNU GPL v3.0"
+license = "BSD"
 repository = "https://github.com/ComicIvans/polyharmonics"
 homepage = "https://github.com/ComicIvans/polyharmonics"
 
