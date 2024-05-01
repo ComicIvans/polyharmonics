@@ -56,9 +56,7 @@ def legendre_def(n: int, store: bool = True, callback: bool = False):
             )
 
 
-def legendre_rec(
-    n: int, store: bool = True, prevPol: Expr = None, callback: bool = False
-):
+def legendre_rec(n: int, store: bool = True, callback: bool = False):
     if n == 0:
         return x**0
     elif n == 1:
@@ -70,7 +68,7 @@ def legendre_rec(
         if store:
             if len(LEGENDRE_REC_STORE) <= n:
                 if len(LEGENDRE_REC_STORE) < n:
-                    legendre_rec(n - 1, store=True)
+                    legendre_rec(n - 1, store=store)
                 LEGENDRE_REC_STORE.append(
                     expand(
                         (
@@ -88,13 +86,11 @@ def legendre_rec(
                 )
             return LEGENDRE_REC_STORE[n]
         else:
-            currPol, prevPol = legendre_rec(
-                n - 1, store=False, prevPol=None, callback=True
-            )
+            curr_pol, prev_pol = legendre_rec(n - 1, store=store, callback=True)
             if callback:
                 return (
                     expand(
-                        ((2 * n - 1) * x * currPol - (n - 1) * prevPol) / n,
+                        ((2 * n - 1) * x * curr_pol - (n - 1) * prev_pol) / n,
                         deep=True,
                         mul=True,
                         multinomial=False,
@@ -102,11 +98,11 @@ def legendre_rec(
                         power_base=False,
                         log=False,
                     ),
-                    currPol,
+                    curr_pol,
                 )
             else:
                 return expand(
-                    ((2 * n - 1) * x * currPol - (n - 1) * prevPol) / n,
+                    ((2 * n - 1) * x * curr_pol - (n - 1) * prev_pol) / n,
                     deep=True,
                     mul=True,
                     multinomial=False,
@@ -134,7 +130,7 @@ def legendre(n: Union[int, List[int]]) -> Union[Expr, List[Expr]]:
             x
             >>> legendre([0, 1])
             [1, x]
-    """
+    """  # noqa: E501
     if isinstance(n, int):
         if n < 0:
             raise ValueError("Degree n must be greater than or equal to 0")
@@ -142,7 +138,7 @@ def legendre(n: Union[int, List[int]]) -> Union[Expr, List[Expr]]:
     elif isinstance(n, list):
         if any(i < 0 for i in n):
             raise ValueError("All degrees n must be greater than or equal to 0")
-        store = len(n) > 1
+        store: bool = len(n) > 1
         return [legendre_rec(i, store=store) for i in n]
     else:
         raise TypeError("n must be an integer or a list of integers")

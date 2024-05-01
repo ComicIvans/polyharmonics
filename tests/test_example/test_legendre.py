@@ -1,4 +1,4 @@
-"""Tests for legendre function."""
+"""Tests for legendre polynomials."""
 
 import pytest
 from sympy import Symbol, simplify
@@ -22,4 +22,5 @@ def test_legendre(n, expected):
     if isinstance(n, int):
         assert simplify(legendre(n) - expected) == 0
     else:
-        assert all(simplify(legendre(deg) - exp) == 0 for deg, exp in zip(n, expected))
+        pols = legendre(n)
+        assert all(simplify(pol - exp) == 0 for pol, exp in zip(pols, expected))

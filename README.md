@@ -25,10 +25,15 @@ Conda package manager is recommended. Create a conda environment.
 conda create -n polyharmonics python==3.10
 ```
 
-Activate conda environment and install the package
+Activate conda environment
 
 ```bash
 conda activate polyharmonics
+```
+
+Install the package
+
+```bash
 pip install polyharmonics
 ```
 
@@ -38,7 +43,7 @@ Then you can run the client using the following command:
 polyharmonics --help
 ```
 
-or with `Poetry`:
+Or with `Poetry`:
 
 ```bash
 poetry run polyharmonics --help
