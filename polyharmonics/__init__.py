@@ -1,7 +1,6 @@
 # type: ignore[attr-defined]
 """Ortogonal Polynomials in the unit sphere."""
 
-import sys
 from importlib import metadata as importlib_metadata
 
 from .associated_legendre_functions import associated_legendre
@@ -15,4 +14,4 @@ def get_version() -> str:
         return "unknown"
 
 
-version: str = get_version()
+__version__: str = get_version()

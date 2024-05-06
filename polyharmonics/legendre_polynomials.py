@@ -1,19 +1,31 @@
-from typing import List, Union
+from typing import List
 
 from sympy import Expr, Rational, diff, expand, factorial, symbols
 
 x, t = symbols("x t")
-
 gen_Legendre: Expr = (1 - 2 * x * t + t**2) ** Rational(-1, 2)
 
-# Where the differentiation of the generating function is stored when using legendre_def
-LEGENDRE_DEF_STORE: List[Expr] = [
-    (1 - 2 * x * t + t**2) ** Rational(-1, 2),
-    -(1 / 2) * (2 * t - 2 * x) * (1 - 2 * x * t + t**2) ** Rational(-3, 2),
-]
 
-# Where the Legendre polynomials are stored when using legendre_rec
-LEGENDRE_REC_STORE: List[Expr] = [x**0, x**1]
+class LegendreStore:
+    def __init__(self):
+        self.reset()
+
+    def reset(self, definition=True, recursion=True):
+        # Stores differentiation of the generating function when using def
+        if definition:
+            self.definition: List[Expr] = [
+                (1 - 2 * x * t + t**2) ** Rational(-1, 2),
+                -Rational(1, 2)
+                * (2 * t - 2 * x)
+                * (1 - 2 * x * t + t**2) ** Rational(-3, 2),
+            ]
+
+        # Stores the Legendre polynomials when using recursion
+        if recursion:
+            self.recursion: List[Expr] = [x**0, x**1]
+
+
+legendre_store = LegendreStore()
 
 
 def legendre_def(n: int, store: bool = True, callback: bool = False):
@@ -24,19 +36,19 @@ def legendre_def(n: int, store: bool = True, callback: bool = False):
     else:
         if store:
             # If the previous polynomials are not stored, calculate and store them
-            if len(LEGENDRE_DEF_STORE) <= n:
-                if len(LEGENDRE_DEF_STORE) < n:
+            if len(legendre_store.definition) <= n:
+                if len(legendre_store.definition) < n:
                     legendre_def(n - 1, store=True, callback=True)
-                LEGENDRE_DEF_STORE.append(diff(LEGENDRE_DEF_STORE[n - 1], t, 1))
+                legendre_store.definition.append(
+                    diff(legendre_store.definition[n - 1], t, 1)
+                )
             # If the function is called by itself to store
             # the previous polynomials, don't return them
             if callback:
                 return None
             else:
-                # The fractions are converted to floats
-                # subs is the problem but don't know why
                 return expand(
-                    (1 / factorial(n)) * LEGENDRE_DEF_STORE[n].subs(t, 0),
+                    (1 / factorial(n)) * legendre_store.definition[n].subs(t, 0),
                     deep=True,
                     mul=True,
                     multinomial=False,
@@ -66,14 +78,14 @@ def legendre_rec(n: int, store: bool = True, callback: bool = False):
             return x**1
     else:
         if store:
-            if len(LEGENDRE_REC_STORE) <= n:
-                if len(LEGENDRE_REC_STORE) < n:
+            if len(legendre_store.recursion) <= n:
+                if len(legendre_store.recursion) < n:
                     legendre_rec(n - 1, store=store)
-                LEGENDRE_REC_STORE.append(
+                legendre_store.recursion.append(
                     expand(
                         (
-                            (2 * n - 1) * x * LEGENDRE_REC_STORE[n - 1]
-                            - (n - 1) * LEGENDRE_REC_STORE[n - 2]
+                            (2 * n - 1) * x * legendre_store.recursion[n - 1]
+                            - (n - 1) * legendre_store.recursion[n - 2]
                         )
                         / n,
                         deep=True,
@@ -84,7 +96,7 @@ def legendre_rec(n: int, store: bool = True, callback: bool = False):
                         log=False,
                     ),
                 )
-            return LEGENDRE_REC_STORE[n]
+            return legendre_store.recursion[n]
         else:
             curr_pol, prev_pol = legendre_rec(n - 1, store=store, callback=True)
             if callback:
@@ -112,33 +124,28 @@ def legendre_rec(n: int, store: bool = True, callback: bool = False):
                 )
 
 
-def legendre(n: Union[int, List[int]]) -> Union[Expr, List[Expr]]:
+def legendre(n: int) -> Expr:
     """
-    Calculate the analytical expression of the Legendre polynomials
+    Calculate the analytical expression of the Legendre polynomial
 
     Args:
-        n (Union[int, List[int]]): The degree of the Legendre polynomial(s).
-        Must be an integer or a list of integers greater than or equal to 0.
+        n (int): The degree of the Legendre polynomial.
+        Must be an integer greater than or equal to 0.
 
     Returns:
-        Union[Expr, List[Expr]]: The Legendre polynomial(s) of the given degree(s).
+        Expr: The Legendre polynomial of the given degree.
 
     Examples:
         .. code:: python
 
+            >>> legendre(0)
+            1
             >>> legendre(1)
             x
-            >>> legendre([0, 1])
-            [1, x]
     """  # noqa: E501
     if isinstance(n, int):
         if n < 0:
-            raise ValueError("Degree n must be greater than or equal to 0")
-        return legendre_rec(n, store=False)
-    elif isinstance(n, list):
-        if any(i < 0 for i in n):
-            raise ValueError("All degrees n must be greater than or equal to 0")
-        store: bool = len(n) > 1
-        return [legendre_rec(i, store=store) for i in n]
+            raise ValueError("n must be greater than or equal to 0")
+        return legendre_rec(n, store=True)
     else:
-        raise TypeError("n must be an integer or a list of integers")
+        raise TypeError("n must be an integer")

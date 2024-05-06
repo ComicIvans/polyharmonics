@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Build status](https://github.com/ComicIvans/polyharmonics/workflows/build/badge.svg?branch=main&event=push)](https://github.com/ComicIvans/polyharmonics/actions?query=workflow%3Abuild)
+![PyPI](https://img.shields.io/pypi/v/polyharmonics)
 [![Python Version](https://img.shields.io/pypi/pyversions/polyharmonics.svg)](https://pypi.org/project/polyharmonics/)
 [![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg)](https://github.com/ComicIvans/polyharmonics/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)
 
