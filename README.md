@@ -148,31 +148,6 @@ make check-codestyle && make test && make check-safety
 </details>
 
 <details>
-<summary>Docker</summary>
-<p>
-
-```bash
-make docker-build
-```
-
-which is equivalent to:
-
-```bash
-make docker-build VERSION=latest
-```
-
-Remove docker image with
-
-```bash
-make docker-remove
-```
-
-More information [about docker](https://github.com/Undertone0809/python-package-template/tree/main/%7B%7B%20cookiecutter.project_name%20%7D%7D/docker).
-
-</p>
-</details>
-
-<details>
 <summary>Cleanup</summary>
 <p>
 Delete pycache files
