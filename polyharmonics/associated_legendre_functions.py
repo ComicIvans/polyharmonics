@@ -184,7 +184,12 @@ def associated_legendre_rec(
                 return ass_legendre_store.recursion[n][m]
         else:
             curr_fun, prev_fun = associated_legendre_rec(
-                n, m - 1, polar=False, store=store, callback=True
+                n,
+                m - 1,
+                polar=False,
+                store=store,
+                callback=True,
+                use_legendre_def=use_legendre_def,
             )
             fun: Expr = expand(
                 (
