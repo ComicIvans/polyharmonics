@@ -8,6 +8,7 @@ from rich.status import Status
 
 from polyharmonics.legendre_polynomials import (
     legendre_def,
+    legendre_exp,
     legendre_rec,
     legendre_store,
 )
@@ -54,13 +55,14 @@ def legendre_bench_command(
     with console.status(status="", spinner="dots") as status:
         status: Status
         table = PrettyTable()
-        n_tests = 4
+        n_tests = 5
         table.field_names = [
             "N",
             "Definition w storage",
             "Definition w/o storage",
             "Recursion w storage",
             "Recursion w/o storage",
+            "Expression",
         ]
 
         # List for each test to indicate if it timed out
@@ -104,6 +106,15 @@ def legendre_bench_command(
                         "with recursion but no storage."
                     ),
                 },
+                {
+                    "fun": calculate_legendre_exp,
+                    "args": (i,),
+                    "text": (
+                        "Calculating all Legendre polynomials "
+                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        "with the expression."
+                    ),
+                },
             ]
             assert len(tests) == n_tests
             row = [i]
@@ -142,9 +153,13 @@ def calculate_legendre(n: int, use_legendre_def: bool, store: bool):
     if store:
         # Reset the store to avoid following calculations to be faster than expected
         legendre_store.reset(definition=use_legendre_def, recursion=not use_legendre_def)
-    values = range(n + 1)
-    for i in values:
+    for i in range(n + 1):
         if use_legendre_def:
             legendre_def(i, store=store)
         else:
             legendre_rec(i, store=store)
+
+
+def calculate_legendre_exp(n: int):
+    for i in range(n + 1):
+        legendre_exp(i)

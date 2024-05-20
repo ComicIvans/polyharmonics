@@ -6,6 +6,7 @@ from sympy import Symbol, simplify
 from polyharmonics import legendre
 from polyharmonics.legendre_polynomials import (
     legendre_def,
+    legendre_exp,
     legendre_rec,
     legendre_store,
 )
@@ -30,3 +31,4 @@ def test_legendre(n, expected):
         assert simplify(legendre_rec(i, store=True) - legendre_def(i, store=True)) == 0
         assert simplify(legendre_rec(i, store=False) - legendre_def(i, store=False)) == 0
         assert simplify(legendre_rec(i, store=False) - legendre_def(i, store=True)) == 0
+        assert simplify(legendre_rec(i, store=True) - legendre_exp(i)) == 0

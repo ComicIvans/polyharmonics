@@ -1,8 +1,8 @@
 from typing import List
 
-from sympy import Expr, Rational, diff, expand, factorial, symbols
+from sympy import Expr, Rational, diff, expand, factorial, floor, symbols
 
-x, t = symbols("x t")
+x, t, k = symbols("x t k")
 gen_Legendre: Expr = (1 - 2 * x * t + t**2) ** Rational(-1, 2)
 
 
@@ -124,6 +124,18 @@ def legendre_rec(n: int, store: bool = True, callback: bool = False):
                 )
 
 
+def legendre_exp(n: int) -> Expr:
+    pol = x * 0
+    for k in range(floor(n / 2) + 1):
+        pol += (
+            (1 if k % 2 == 0 else -1)
+            * factorial(2 * n - 2 * k)
+            / (2**n * factorial(k) * factorial(n - k) * factorial(n - 2 * k))
+            * x ** (n - 2 * k)
+        )
+    return pol
+
+
 def legendre(n: int) -> Expr:
     """
     Calculate the analytical expression of the Legendre polynomial
@@ -146,6 +158,6 @@ def legendre(n: int) -> Expr:
     if isinstance(n, int):
         if n < 0:
             raise ValueError("n must be greater than or equal to 0")
-        return legendre_rec(n, store=True)
+        return legendre_exp(n)
     else:
         raise TypeError("n must be an integer")
