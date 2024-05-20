@@ -97,25 +97,6 @@ make check-codestyle
 </details>
 
 <details>
-<summary>Code security</summary>
-<p>
-
-> If this command is not selected during installation, it cannnot be used.
-
-```bash
-make check-safety
-```
-
-This command launches `Poetry` integrity checks as well as identifies security issues with `Safety` and `Bandit`.
-
-```bash
-make check-safety
-```
-
-</p>
-</details>
-
-<details>
 <summary>Tests with coverage badges</summary>
 <p>
 
