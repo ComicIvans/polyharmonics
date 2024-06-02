@@ -10,6 +10,7 @@ from polyharmonics.associated_legendre_functions import (
     ass_legendre_store,
     associated_legendre_def,
     associated_legendre_rec,
+    associated_legendre_rec_alt,
 )
 
 x = Symbol("x")
@@ -40,10 +41,12 @@ def test_associated_legendre(n, m, polar, expected):
         for j in range(-2, 3):
             ass_legendre_store.reset()
             fun_pairs: List[Expr] = [
-                associated_legendre_def(i, j, store=True, use_legendre_def=True),
-                associated_legendre_rec(i, j, store=False, use_legendre_def=False),
-                associated_legendre_def(i, j, store=False, use_legendre_def=False),
-                associated_legendre_rec(i, j, store=True, use_legendre_def=True),
+                associated_legendre_def(i, j, store=True),
+                associated_legendre_rec(i, j, store=False),
+                associated_legendre_def(i, j, store=False),
+                associated_legendre_rec(i, j, store=True),
+                associated_legendre_rec_alt(i, j),
+                associated_legendre_def(i, j),
             ]
             x_vals = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
             for x_val in x_vals:
@@ -52,12 +55,10 @@ def test_associated_legendre(n, m, polar, expected):
                         fun_pairs[i].subs(x, x_val) - fun_pairs[i + 1].subs(x, x_val)
                     ) == 0
             polar_fun_pairs: List[Expr] = [
-                associated_legendre_def(
-                    i, j, store=True, use_legendre_def=True, polar=True
-                ),
-                associated_legendre_rec(
-                    i, j, store=True, use_legendre_def=True, polar=True
-                ),
+                associated_legendre_def(i, j, store=True, polar=True),
+                associated_legendre_rec_alt(i, j, polar=True),
+                associated_legendre_rec(i, j, store=True, polar=True),
+                associated_legendre_rec_alt(i, j, polar=True),
             ]
             for th_val in [acos(x_val) for x_val in x_vals]:
                 for i in range(0, len(polar_fun_pairs), 2):

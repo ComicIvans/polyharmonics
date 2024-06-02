@@ -39,7 +39,6 @@ def associated_legendre_command(
     ),
     evaluate: str = typer.Option(
         None,
-        "-x",
         "--eval",
         case_sensitive=False,
         help="""Print the function(s) evaluated on the given numbers.
@@ -61,6 +60,11 @@ def associated_legendre_command(
     ),
 ) -> None:
     """Calculate and print the associated Legendre function(s)."""
+
+    if print_latex and evaluate:
+        raise typer.BadParameter(
+            "Cannot use both '--print_latex' and '--eval' at the same time."
+        )
 
     # Convert the input to two lists of integers
     try:
@@ -99,6 +103,7 @@ def associated_legendre_command(
         t_start = time()
 
     # Calculate the Associated Legendre function(s)
+
     with console.status(
         status=(
             "[yellow1]Calculating associated Legendre functions.[/]"
@@ -107,9 +112,15 @@ def associated_legendre_command(
         ),
         spinner="dots",
     ):
-        result: List[Expr] = [
-            associated_legendre(i, j, polar=polar) for i, j in zip(n_values, m_values)
-        ]
+        if x_values:
+            result: List[List[float]] = [
+                [associated_legendre(i, j, polar=polar, eval=x) for x in x_values]
+                for i, j in zip(n_values, m_values)
+            ]
+        else:
+            result: List[Expr] = [
+                associated_legendre(i, j, polar=polar) for i, j in zip(n_values, m_values)
+            ]
 
     if display_time:
         t_end = time()
@@ -120,9 +131,19 @@ def associated_legendre_command(
     for n, m, fun in zip(n_values, m_values, result):
         if print_latex:
             if polar:
-                console.print(f"[bold {color}]P_{n}^{m}(x) = {latex(fun)}[/]\n")
-            else:
                 console.print(f"[bold {color}]P_{n}^{m}(cos(θ)) = {latex(fun)}[/]\n")
+            else:
+                console.print(f"[bold {color}]P_{n}^{m}(x) = {latex(fun)}[/]\n")
+        elif x_values:
+            for i, x in enumerate(x_values):
+                if polar:
+                    console.print(
+                        f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}(cos({x})) = {fun[i]}[/]\n"  # noqa: E501
+                    )
+                else:
+                    console.print(
+                        f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}({x}) = {fun[i]}[/]\n"  # noqa: E501
+                    )
         else:
             if polar:
                 console.print(
@@ -135,25 +156,5 @@ def associated_legendre_command(
             console.print(
                 f"[bold {color}] {pretty(fun)}[/]\n",
             )
-        if x_values:
-            for x in x_values:
-                if abs(x) != 1:
-                    if polar:
-                        console.print(
-                            f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}({x}) = {fun.subs(th, acos(x))}[/]\n"  # noqa: E501
-                        )
-                    else:
-                        console.print(
-                            f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}({x}) = {fun.subs(X, x)}[/]\n"  # noqa: E501
-                        )
-                else:
-                    if polar:
-                        console.print(
-                            f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}({x}) = {limit(fun, th, acos(x))}[/]\n"  # noqa: E501
-                        )
-                    else:
-                        console.print(
-                            f"[bold {color}]P{str(n).translate(SUB)}{str(m).translate(SUP)}({x}) = {limit(fun, X, x)}[/]\n"  # noqa: E501
-                        )
 
     raise typer.Exit()

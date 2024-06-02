@@ -12,8 +12,8 @@ from polyharmonics.associated_legendre_functions import (
     ass_legendre_store,
     associated_legendre_def,
     associated_legendre_rec,
+    associated_legendre_rec_alt,
 )
-from polyharmonics.legendre_polynomials import legendre_store
 
 SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 SUP = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
@@ -27,17 +27,11 @@ def associated_legendre_bench_command(
         Either a pair of integers separated by ':' or a comma-separated list of such pairs.""",  # noqa: E501
         metavar="SUB:SUP",
     ),
-    only_def: bool = typer.Option(
-        False,
-        "--only-def",
+    eval: float = typer.Option(
+        None,
+        "--eval",
         case_sensitive=False,
-        help="Only use the associated Legendre functions definition.",
-    ),
-    only_rec: bool = typer.Option(
-        False,
-        "--only-rec",
-        case_sensitive=False,
-        help="Only use the associated Legendre functions recursion.",
+        help="Evaluate the functions on the given number.",
     ),
     max_time: float = typer.Option(
         60.0,
@@ -54,9 +48,6 @@ def associated_legendre_bench_command(
     ),
 ) -> None:
     """Benchmark the calculation of associated Legendre functions and display the time taken."""  # noqa: E501
-
-    if only_def and only_rec:
-        raise typer.BadParameter("Only one of --only-def or --only-rec can be used.")
 
     try:
         nm_values: List[Tuple[int, int]] = []
@@ -79,212 +70,112 @@ def associated_legendre_bench_command(
             "nm must either be a pair of integers separated by ':' or a list of such pairs separated by commas."  # noqa: E501
         )
 
-    if not only_rec:
-        with console.status(status="", spinner="dots") as status:
-            status: Status
-            table = []
-            n_tests = 4
-            headers = [
-                "N:M",
-                "Legendre def w storage",
-                "Legendre def w/o storage",
-                "Legendre rec w storage",
-                "Legendre rec w/o storage",
+    with console.status(status="", spinner="dots") as status:
+        status: Status
+        table = []
+        n_tests = 5
+        headers = [
+            "N:M",
+            "Definition w storage",
+            "Definition w/o storage",
+            "Recursion w storage",
+            "Recursion w/o storage",
+            "Alternative recursion",
+        ]
+
+        timed_out = [False for _ in range(n_tests)]
+        for n, m in nm_values:
+            # List of tests to run for each n, m of nm_values
+            tests = [
+                {
+                    "fun": calculate_associated_legendre,
+                    "args": (n, m, eval, True, False, True),
+                    "text": (
+                        "Calculating all associated Legendre functions from "
+                        f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
+                        "definition and storage."
+                    ),
+                },
+                {
+                    "fun": calculate_associated_legendre,
+                    "args": (n, m, eval, True, False, False),
+                    "text": (
+                        "Calculating all associated Legendre functions from "
+                        f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
+                        "definition but no storage."
+                    ),
+                },
+                {
+                    "fun": calculate_associated_legendre,
+                    "args": (n, m, eval, False, False, True),
+                    "text": (
+                        "Calculating all associated Legendre functions from "
+                        f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
+                        "recursion and storage."
+                    ),
+                },
+                {
+                    "fun": calculate_associated_legendre,
+                    "args": (n, m, eval, False, False, False),
+                    "text": (
+                        "Calculating all associated Legendre functions from "
+                        f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
+                        "recursion but no storage."
+                    ),
+                },
+                {
+                    "fun": calculate_associated_legendre,
+                    "args": (n, m, eval, False, True, False),
+                    "text": (
+                        "Calculating all associated Legendre functions from "
+                        f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
+                        "alternative recursion."
+                    ),
+                },
             ]
+            assert len(tests) == n_tests
+            row = [f"{n}:{m}"]
+            for n_test, test in enumerate(tests):
+                status.update(f"[bold yellow1]{test['text']}[/]")
+                if timed_out[n_test]:
+                    row.append("TIMEOUT")
+                else:
+                    legendre_calc = Process(target=test["fun"], args=test["args"])
+                    t_start = time.time()
+                    legendre_calc.start()
+                    while legendre_calc.is_alive():
+                        if time.time() - t_start > max_time:
+                            legendre_calc.terminate()
+                            row.append("TIMEOUT")
+                            timed_out[n_test] = True
+                            break
 
-            timed_out = [False for _ in range(n_tests)]
-            for n, m in nm_values:
-                # List of tests to run for each n, m of nm_values
-                tests = [
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, True, True, True),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre definition, "
-                            "the Legendre definition and storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, True, True, False),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre definition, "
-                            "the Legendre definition but no storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, True, False, True),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre definition, "
-                            "the Legendre recursion and storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, True, False, False),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre definition, "
-                            "the Legendre recursion but no storage."
-                        ),
-                    },
-                ]
-                assert len(tests) == n_tests
-                row = [f"{n}:{m}"]
-                for n_test, test in enumerate(tests):
-                    status.update(f"[bold yellow1]{test['text']}[/]")
-                    if timed_out[n_test]:
-                        row.append("TIMEOUT")
-                    else:
-                        legendre_calc = Process(target=test["fun"], args=test["args"])
-                        t_start = time.time()
-                        legendre_calc.start()
-                        while legendre_calc.is_alive():
-                            if time.time() - t_start > max_time:
-                                legendre_calc.terminate()
-                                row.append("TIMEOUT")
-                                timed_out[n_test] = True
-                                break
+                    if len(row) == n_test + 1:
+                        row.append(round(time.time() - t_start, 6))
 
-                        if len(row) == n_test + 1:
-                            row.append(round(time.time() - t_start, 6))
+            table.append(row)
 
-                table.append(row)
-
-        if csv is None:
-            console.print(
-                "[bold green]ASSOCIATED LEGENDRE FUNCTIONS UP TO N:M WITH DEFINITION[/]"
+    if csv is None:
+        console.print("[bold green]ASSOCIATED LEGENDRE FUNCTIONS UP TO N:M[/]")
+        console.print(
+            tabulate(
+                table,
+                headers,
+                tablefmt="fancy_grid",
+                maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
             )
-            console.print(
-                tabulate(
-                    table,
-                    headers,
-                    tablefmt="fancy_grid",
-                    maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
-                )
-            )
-        else:
-            with open(csv + "_def.csv", "w") as f:
-                csv_writer = writer(f)
-                csv_writer.writerow(headers)
-                for row in table:
-                    csv_writer.writerow(row)
-
-    if not only_def:
-        with console.status(status="", spinner="dots") as status:
-            status: Status
-            table = []
-            n_tests = 4
-            headers = [
-                "N:M",
-                "Legendre def w storage",
-                "Legendre def w/o storage",
-                "Legendre rec w storage",
-                "Legendre rec w/o storage",
-            ]
-
-            # List for each test to indicate if it timed out
-            timed_out = [False for _ in range(n_tests)]
-            for n, m in nm_values:
-                # List of tests to run for each n, m of nm_values
-                tests = [
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, False, True, True),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre recursion, "
-                            "the Legendre definition and storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, False, True, False),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre recursion, "
-                            "the Legendre definition but no storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, False, False, True),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre recursion, "
-                            "the Legendre recursion and storage."
-                        ),
-                    },
-                    {
-                        "fun": calculate_associated_legendre,
-                        "args": (n, m, False, False, False),
-                        "text": (
-                            "Calculating all associated Legendre functions from "
-                            f"P{str(0).translate(SUB)}{str(0).translate(SUP)}(x) to "
-                            f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) with the "
-                            "associated Legendre recursion, "
-                            "the Legendre recursion but no storage."
-                        ),
-                    },
-                ]
-                assert len(tests) == n_tests
-                row = [f"{n}:{m}"]
-                for n_test, test in enumerate(tests):
-                    status.update(f"[yellow1]{test['text']}[/]")
-                    if timed_out[n_test]:
-                        row.append("TIMEOUT")
-                    else:
-                        legendre_calc = Process(target=test["fun"], args=test["args"])
-                        t_start = time.time()
-                        legendre_calc.start()
-                        while legendre_calc.is_alive():
-                            if time.time() - t_start > max_time:
-                                legendre_calc.terminate()
-                                row.append("TIMEOUT")
-                                timed_out[n_test] = True
-                                break
-
-                        if len(row) == n_test + 1:
-                            row.append(round(time.time() - t_start, 6))
-
-                table.append(row)
-
-        if csv is None:
-            console.print(
-                "[bold green]ASSOCIATED LEGENDRE FUNCTIONS UP TO N:M WITH RECURSION[/]"
-            )
-            console.print(
-                tabulate(
-                    table,
-                    headers,
-                    tablefmt="fancy_grid",
-                    maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
-                )
-            )
-        else:
-            with open(csv + "_rec.csv", "w") as f:
-                csv_writer = writer(f)
-                csv_writer.writerow(headers)
-                for row in table:
-                    csv_writer.writerow(row)
+        )
+    else:
+        with open(csv + ".csv", "w") as f:
+            csv_writer = writer(f)
+            csv_writer.writerow(headers)
+            for row in table:
+                csv_writer.writerow(row)
 
     raise typer.Exit()
 
@@ -292,26 +183,25 @@ def associated_legendre_bench_command(
 def calculate_associated_legendre(
     n: int,
     m: int,
-    use_associated_legendre_def: bool,
-    use_legendre_def: bool,
+    eval: float | None,
+    use_def: bool,
+    use_alt_rec: bool,
     store: bool,
 ):
     if store:
         # Reset the stores to avoid following calculations to be faster than expected
         ass_legendre_store.reset(
-            definition=use_associated_legendre_def,
-            recursion=not use_associated_legendre_def,
+            definition=use_def,
+            recursion=not use_def,
         )
-        legendre_store.reset(definition=use_legendre_def, recursion=not use_legendre_def)
     n_values = range(n + 1)
     for i in n_values:
         m_values = range(m + 1 if n >= m else n + 1)
         for j in m_values:
-            if use_associated_legendre_def:
-                associated_legendre_def(
-                    i, j, store=store, use_legendre_def=use_legendre_def
-                )
+            if use_alt_rec:
+                associated_legendre_rec_alt(i, j, eval=eval)
             else:
-                associated_legendre_rec(
-                    i, j, store=store, use_legendre_def=use_legendre_def
-                )
+                if use_def:
+                    associated_legendre_def(i, j, eval=eval, store=store)
+                else:
+                    associated_legendre_rec(i, j, eval=eval, store=store)

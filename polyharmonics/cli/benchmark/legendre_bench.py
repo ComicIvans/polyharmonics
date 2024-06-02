@@ -29,7 +29,7 @@ def legendre_bench_command(
         None,
         "--eval",
         case_sensitive=False,
-        help="Evaluate the polynomial on the given number.",
+        help="Evaluate the polynomials on the given number.",
     ),
     max_time: float = typer.Option(
         60.0,

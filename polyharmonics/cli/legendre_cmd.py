@@ -29,7 +29,6 @@ def legendre_command(
     ),
     evaluate: str = typer.Option(
         None,
-        "-x",
         "--eval",
         case_sensitive=False,
         help="""Print the polynomial(s) evaluated on the given numbers.
@@ -52,7 +51,7 @@ def legendre_command(
 ) -> None:
     """Calculate and print the Legendre polynomial(s)."""
 
-    if print_latex and eval:
+    if print_latex and evaluate:
         raise typer.BadParameter(
             "Cannot use both '--print_latex' and '--eval' at the same time."
         )
