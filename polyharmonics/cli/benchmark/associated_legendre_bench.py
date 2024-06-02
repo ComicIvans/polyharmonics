@@ -1,11 +1,12 @@
 import time
+from csv import writer
 from multiprocessing import Process
 from typing import List, Tuple
 
 import typer
-from prettytable import PrettyTable
 from rich.console import Console
 from rich.status import Status
+from tabulate import tabulate
 
 from polyharmonics.associated_legendre_functions import (
     ass_legendre_store,
@@ -81,9 +82,9 @@ def associated_legendre_bench_command(
     if not only_rec:
         with console.status(status="", spinner="dots") as status:
             status: Status
-            table = PrettyTable()
+            table = []
             n_tests = 4
-            table.field_names = [
+            headers = [
                 "N:M",
                 "Legendre def w storage",
                 "Legendre def w/o storage",
@@ -158,26 +159,35 @@ def associated_legendre_bench_command(
                                 break
 
                         if len(row) == n_test + 1:
-                            row.append(time.time() - t_start)
+                            row.append(round(time.time() - t_start, 6))
 
-                table.add_row(row)
+                table.append(row)
 
         if csv is None:
             console.print(
                 "[bold green]ASSOCIATED LEGENDRE FUNCTIONS UP TO N:M WITH DEFINITION[/]"
             )
-            console.print(table)
+            console.print(
+                tabulate(
+                    table,
+                    headers,
+                    tablefmt="fancy_grid",
+                    maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
+                )
+            )
         else:
-            # Open the file in binary mode to avoid having multiple newlines
-            with open(csv + "_def.csv", "wb") as f:
-                f.write(table.get_csv_string().encode("utf-8"))
+            with open(csv + "_def.csv", "w") as f:
+                csv_writer = writer(f)
+                csv_writer.writerow(headers)
+                for row in table:
+                    csv_writer.writerow(row)
 
     if not only_def:
         with console.status(status="", spinner="dots") as status:
             status: Status
-            table = PrettyTable()
+            table = []
             n_tests = 4
-            table.field_names = [
+            headers = [
                 "N:M",
                 "Legendre def w storage",
                 "Legendre def w/o storage",
@@ -253,19 +263,28 @@ def associated_legendre_bench_command(
                                 break
 
                         if len(row) == n_test + 1:
-                            row.append(time.time() - t_start)
+                            row.append(round(time.time() - t_start, 6))
 
-                table.add_row(row)
+                table.append(row)
 
         if csv is None:
             console.print(
                 "[bold green]ASSOCIATED LEGENDRE FUNCTIONS UP TO N:M WITH RECURSION[/]"
             )
-            console.print(table)
+            console.print(
+                tabulate(
+                    table,
+                    headers,
+                    tablefmt="fancy_grid",
+                    maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
+                )
+            )
         else:
-            # Open the file in binary mode to avoid having multiple newlines
-            with open(csv + "_rec.csv", "wb") as f:
-                f.write(table.get_csv_string().encode("utf-8"))
+            with open(csv + "_rec.csv", "w") as f:
+                csv_writer = writer(f)
+                csv_writer.writerow(headers)
+                for row in table:
+                    csv_writer.writerow(row)
 
     raise typer.Exit()
 

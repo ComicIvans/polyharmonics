@@ -1,10 +1,11 @@
 import time
+from csv import writer
 from multiprocessing import Process
 
 import typer
-from prettytable import PrettyTable
 from rich.console import Console
 from rich.status import Status
+from tabulate import tabulate
 
 from polyharmonics.legendre_polynomials import (
     legendre_def,
@@ -23,6 +24,12 @@ def legendre_bench_command(
         help="""Calculate the Legendre polynomials from 0 to the given degree.
         An integer or a comma-separated list of integers.""",
         metavar="DEGREE",
+    ),
+    eval: float = typer.Option(
+        None,
+        "--eval",
+        case_sensitive=False,
+        help="Evaluate the polynomial on the given number.",
     ),
     max_time: float = typer.Option(
         60.0,
@@ -54,9 +61,9 @@ def legendre_bench_command(
 
     with console.status(status="", spinner="dots") as status:
         status: Status
-        table = PrettyTable()
+        table = []
         n_tests = 5
-        table.field_names = [
+        headers = [
             "N",
             "Definition w storage",
             "Definition w/o storage",
@@ -72,46 +79,51 @@ def legendre_bench_command(
             tests = [
                 {
                     "fun": calculate_legendre,
-                    "args": (i, True, True),
+                    "args": (i, eval, True, True),
                     "text": (
-                        "Calculating all Legendre polynomials "
-                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
                         "with definition and storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, True, False),
+                    "args": (i, eval, True, False),
                     "text": (
-                        "Calculating all Legendre polynomials "
-                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
                         "with definition but no storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, False, True),
+                    "args": (i, eval, False, True),
                     "text": (
-                        "Calculating all Legendre polynomials "
-                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
                         "with recursion and storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, False, False),
+                    "args": (i, eval, False, False),
                     "text": (
-                        "Calculating all Legendre polynomials "
-                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
                         "with recursion but no storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre_exp,
-                    "args": (i,),
+                    "args": (i, eval),
                     "text": (
-                        "Calculating all Legendre polynomials "
-                        f"from P{str(0).translate(SUB)}(x) to P{str(i).translate(SUB)}(x) "
+                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
                         "with the expression."
                     ),
                 },
@@ -134,32 +146,46 @@ def legendre_bench_command(
                             break
 
                     if len(row) == n_test + 1:
-                        row.append(time.time() - t_start)
+                        row.append(round(time.time() - t_start, 6))
 
-            table.add_row(row)
+            table.append(row)
 
     if csv is None:
-        console.print("[bold green]LEGENDRE POLYNOMIALS UP TO N[/]")
-        console.print(table)
+        console.print(
+            "[bold green]LEGENDRE POLYNOMIALS UP TO N[/]"
+            + f"[bold green] EVALUATED ON x = {eval}[/]"
+            if eval is not None
+            else ""
+        )
+        console.print(
+            tabulate(
+                table,
+                headers,
+                tablefmt="fancy_grid",
+                maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
+            )
+        )
     else:
-        # Open the file in binary mode to avoid having multiple newlines
-        with open(csv + ".csv", "wb") as f:
-            f.write(table.get_csv_string().encode("utf-8"))
+        with open(csv + ".csv", "w") as f:
+            csv_writer = writer(f)
+            csv_writer.writerow(headers)
+            for row in table:
+                csv_writer.writerow(row)
 
     raise typer.Exit()
 
 
-def calculate_legendre(n: int, use_legendre_def: bool, store: bool):
+def calculate_legendre(n: int, eval: float | None, use_legendre_def: bool, store: bool):
     if store:
         # Reset the store to avoid following calculations to be faster than expected
         legendre_store.reset(definition=use_legendre_def, recursion=not use_legendre_def)
     for i in range(n + 1):
         if use_legendre_def:
-            legendre_def(i, store=store)
+            legendre_def(i, eval=eval, store=store)
         else:
-            legendre_rec(i, store=store)
+            legendre_rec(i, eval=eval, store=store)
 
 
-def calculate_legendre_exp(n: int):
+def calculate_legendre_exp(n: int, eval: float | None):
     for i in range(n + 1):
-        legendre_exp(i)
+        legendre_exp(i, eval=eval)

@@ -1,5 +1,7 @@
 """Tests for legendre polynomials."""
 
+from random import random
+
 import pytest
 from sympy import Symbol, simplify
 
@@ -27,8 +29,17 @@ def test_legendre(n, expected):
     """Test the Legendre function with parametrization."""
     assert simplify(legendre(n) - expected) == 0
     for i in range(5, 10):
+        val = random() * 2 - 1
         legendre_store.reset()
         assert simplify(legendre_rec(i, store=True) - legendre_def(i, store=True)) == 0
+        assert legendre_rec(i, eval=val, store=True) - legendre_def(
+            i, eval=val, store=False
+        ) == pytest.approx(0)
         assert simplify(legendre_rec(i, store=False) - legendre_def(i, store=False)) == 0
+        assert legendre_def(i, eval=val, store=False) - legendre_def(
+            i, eval=val, store=False
+        ) == pytest.approx(0)
         assert simplify(legendre_rec(i, store=False) - legendre_def(i, store=True)) == 0
+        assert legendre_exp(i, eval=val) - legendre_rec(i, eval=val) == pytest.approx(0)
         assert simplify(legendre_rec(i, store=True) - legendre_exp(i)) == 0
+        assert legendre_rec(i, eval=val) - legendre_exp(i).subs(x, val) == pytest.approx(0)

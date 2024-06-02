@@ -3,14 +3,13 @@ from typing import List, Optional
 
 import typer
 from rich.console import Console
-from sympy import Expr, Symbol, latex, pretty
+from sympy import Expr, latex, pretty
 
 from polyharmonics import legendre
 
 from .colors import Color
 
 SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-X = Symbol("x")
 console = Console()
 
 
@@ -53,6 +52,11 @@ def legendre_command(
 ) -> None:
     """Calculate and print the Legendre polynomial(s)."""
 
+    if print_latex and eval:
+        raise typer.BadParameter(
+            "Cannot use both '--print_latex' and '--eval' at the same time."
+        )
+
     # Convert the input to a list of integers
     try:
         n_values = [int(value) for value in n.split(",")]
@@ -89,7 +93,12 @@ def legendre_command(
         ),
         spinner="dots",
     ):
-        result: List[Expr] = [legendre(i) for i in n_values]
+        if x_values:
+            result: List[List[float]] = [
+                [legendre(i, x) for x in x_values] for i in n_values
+            ]
+        else:
+            result: List[Expr] = [legendre(i) for i in n_values]
 
     if display_time:
         t_end = time()
@@ -100,13 +109,13 @@ def legendre_command(
     for n, pol in zip(n_values, result):
         if print_latex:
             console.print(f"[bold {color}]P_{n}(x) = {latex(pol)}[/]\n")
+        elif x_values:
+            for i, x in enumerate(x_values):
+                console.print(
+                    f"[bold {color}]P{str(n).translate(SUB)}({x}) = {pol[i]}[/]\n"
+                )
         else:
             console.print(f"[bold {color}]P{str(n).translate(SUB)}(x) = [/]")
             console.print(f"[bold {color}] {pretty(pol)}[/]\n")
-        if x_values:
-            for x in x_values:
-                console.print(
-                    f"[bold {color}]P{str(n).translate(SUB)}({x}) = {pol.subs(X, x)}[/]\n"  # noqa: E501
-                )
 
     raise typer.Exit()
