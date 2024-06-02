@@ -39,7 +39,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
 ]
 
 [tool.poetry.scripts]
@@ -49,7 +49,7 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 matplotlib = "^3.8.4"
 sympy = "^1.12"
 rich = "^13.7.1"
