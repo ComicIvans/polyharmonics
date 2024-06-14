@@ -230,7 +230,7 @@ def plot_results(df: pd.DataFrame, eval: bool):
 
     if not something_to_plot:
         raise ValueError("Not enough data to plot.")
-    plt.xlabel("N")
+    plt.xlabel("First N polynomials")
     plt.ylabel("Time (s)")
     plt.title(f"{'Evaluation' if eval else 'Calculation'} of Legendre polynomials $P_n(x)$")
     plt.legend()
