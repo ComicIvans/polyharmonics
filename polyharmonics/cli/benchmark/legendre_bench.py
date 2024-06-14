@@ -2,9 +2,14 @@ import time
 from csv import writer
 from multiprocessing import Process
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import typer
 from rich.console import Console
 from rich.status import Status
+from scipy.interpolate import make_interp_spline
+from scipy.optimize import curve_fit
 from tabulate import tabulate
 
 from polyharmonics.legendre_polynomials import (
@@ -44,6 +49,12 @@ def legendre_bench_command(
         help="""Save the results in a CSV file with the given name.
         File extension must not be specified.""",
     ),
+    plot: bool = typer.Option(
+        False,
+        "--plot",
+        case_sensitive=False,
+        help="Plot the results in a graph.",
+    ),
 ) -> None:
     """Benchmark the calculation of Legendre polynomials and display the time taken."""  # noqa: E501
 
@@ -61,8 +72,6 @@ def legendre_bench_command(
 
     with console.status(status="", spinner="dots") as status:
         status: Status
-        table = []
-        n_tests = 5
         headers = [
             "N",
             "Definition w storage",
@@ -71,6 +80,8 @@ def legendre_bench_command(
             "Recursion w/o storage",
             "Expression",
         ]
+        df = pd.DataFrame(columns=headers)
+        n_tests = len(df.columns) - 1
 
         # List for each test to indicate if it timed out
         timed_out = [False for _ in range(n_tests)]
@@ -129,11 +140,11 @@ def legendre_bench_command(
                 },
             ]
             assert len(tests) == n_tests
-            row = [i]
+            row = {"N": i}
             for n_test, test in enumerate(tests):
                 status.update(f"[yellow1]{test['text']}[/]")
                 if timed_out[n_test]:
-                    row.append("TIMEOUT")
+                    row[headers[n_test + 1]] = "TIMEOUT"
                 else:
                     legendre_calc = Process(target=test["fun"], args=test["args"])
                     t_start = time.time()
@@ -141,14 +152,14 @@ def legendre_bench_command(
                     while legendre_calc.is_alive():
                         if time.time() - t_start > max_time:
                             legendre_calc.terminate()
-                            row.append("TIMEOUT")
+                            row[headers[n_test + 1]] = "TIMEOUT"
                             timed_out[n_test] = True
                             break
 
                     if len(row) == n_test + 1:
-                        row.append(round(time.time() - t_start, 6))
+                        row[headers[n_test + 1]] = round(time.time() - t_start, 6)
 
-            table.append(row)
+            df.loc[len(df)] = row
 
     if csv is None:
         console.print(
@@ -159,18 +170,18 @@ def legendre_bench_command(
         )
         console.print(
             tabulate(
-                table,
-                headers,
+                df,
+                headers="keys",
                 tablefmt="fancy_grid",
                 maxheadercolwidths=[None] + [12 for _ in range(n_tests)],
+                showindex=False,
             )
         )
     else:
-        with open(csv + ".csv", "w") as f:
-            csv_writer = writer(f)
-            csv_writer.writerow(headers)
-            for row in table:
-                csv_writer.writerow(row)
+        df.to_csv(csv + ".csv", encoding="utf-8", index=False)
+
+    if plot:
+        plot_results(df, eval is not None)
 
     raise typer.Exit()
 
@@ -189,3 +200,39 @@ def calculate_legendre(n: int, eval: float | None, use_legendre_def: bool, store
 def calculate_legendre_exp(n: int, eval: float | None):
     for i in range(n + 1):
         legendre_exp(i, eval=eval)
+
+
+def plot_results(df: pd.DataFrame, eval: bool):
+    df["N"] = df["N"].astype(int)
+    columns = df.columns[1:]
+    plt.figure(figsize=(10, 6))
+
+    something_to_plot = False
+    for col in columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+        clean_df = df.dropna(subset=[col])
+        if clean_df[col].count() > 2:
+            something_to_plot = True
+            scatter = plt.scatter(clean_df["N"], clean_df[col], label=col)
+            x = clean_df["N"]
+            y = clean_df[col]
+            try:
+                X_ = np.linspace(x.min(), x.max(), 500)
+                coeff = np.polyfit(x, y, 3)
+                Y_ = np.polyval(coeff, X_)
+
+                # Ensure the curve is monotonically increasing
+                Y_ = np.maximum.accumulate(Y_)
+
+                plt.plot(X_, Y_, linestyle="--", color=scatter.get_facecolor()[0])
+            except ValueError as e:
+                print(f"Could not fit curve for {col}: {e}")
+
+    if not something_to_plot:
+        raise ValueError("Not enough data to plot.")
+    plt.xlabel("N")
+    plt.ylabel("Time (s)")
+    plt.title(f"{'Evaluation' if eval else 'Calculation'} of Legendre polynomials $P_n(x)$")
+    plt.legend()
+    plt.grid(True)
+    plt.show()

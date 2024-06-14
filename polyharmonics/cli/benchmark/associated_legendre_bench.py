@@ -1,10 +1,8 @@
 import time
-from csv import writer
 from multiprocessing import Process
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import typer
 from rich.console import Console
@@ -179,7 +177,7 @@ def associated_legendre_bench_command(
         df.to_csv(csv + ".csv", encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df)
+        plot_results(df, eval is not None)
 
     raise typer.Exit()
 
@@ -207,7 +205,7 @@ def calculate_associated_legendre(
             associated_legendre_rec(n, m, eval=eval, store=store)
 
 
-def plot_results(df: pd.DataFrame):
+def plot_results(df: pd.DataFrame, eval: bool):
     df[["N", "M"]] = df["N:M"].str.split(":", expand=True)
     df["N"] = df["N"].astype(int)
     df["M"] = df["M"].astype(int)
@@ -233,7 +231,9 @@ def plot_results(df: pd.DataFrame):
 
         plt.xlabel("N")
         plt.ylabel("M")
-        plt.title(f"Evaluation of Associated Legendre Functions $P_n^m(x)$ - {label}")
+        plt.title(
+            f"{'Evaluation' if eval else 'Calculation'} of associated Legendre functions $P_n^m(x)$ - {label}"  # noqa: E501
+        )
         plt.grid(True)
 
         plt.xlim(0, max_limit)
