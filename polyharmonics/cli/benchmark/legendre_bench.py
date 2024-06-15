@@ -1,5 +1,4 @@
 import time
-from csv import writer
 from multiprocessing import Process
 
 import matplotlib.pyplot as plt
@@ -8,8 +7,6 @@ import pandas as pd
 import typer
 from rich.console import Console
 from rich.status import Status
-from scipy.interpolate import make_interp_spline
-from scipy.optimize import curve_fit
 from tabulate import tabulate
 
 from polyharmonics.legendre_polynomials import (
@@ -30,7 +27,7 @@ def legendre_bench_command(
         An integer or a comma-separated list of integers.""",
         metavar="DEGREE",
     ),
-    eval: float = typer.Option(
+    evaluate: float = typer.Option(
         None,
         "--eval",
         case_sensitive=False,
@@ -90,51 +87,51 @@ def legendre_bench_command(
             tests = [
                 {
                     "fun": calculate_legendre,
-                    "args": (i, eval, True, True),
+                    "args": (i, evaluate, True, True),
                     "text": (
-                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
-                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
-                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
+                        f"to P{str(i).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with definition and storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, eval, True, False),
+                    "args": (i, evaluate, True, False),
                     "text": (
-                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
-                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
-                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
+                        f"to P{str(i).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with definition but no storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, eval, False, True),
+                    "args": (i, evaluate, False, True),
                     "text": (
-                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
-                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
-                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
+                        f"to P{str(i).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with recursion and storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre,
-                    "args": (i, eval, False, False),
+                    "args": (i, evaluate, False, False),
                     "text": (
-                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
-                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
-                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
+                        f"to P{str(i).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with recursion but no storage."
                     ),
                 },
                 {
                     "fun": calculate_legendre_exp,
-                    "args": (i, eval),
+                    "args": (i, evaluate),
                     "text": (
-                        f"{'Calculating' if eval is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
-                        f"from P{str(0).translate(SUB)}({'x' if eval is None else eval}) "
-                        f"to P{str(i).translate(SUB)}({'x' if eval is None else eval}) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} all Legendre polynomials "  # noqa: E501
+                        f"from P{str(0).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
+                        f"to P{str(i).translate(SUB)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the expression."
                     ),
                 },
@@ -164,8 +161,8 @@ def legendre_bench_command(
     if csv is None:
         console.print(
             "[bold green]LEGENDRE POLYNOMIALS UP TO N[/]"
-            + f"[bold green] EVALUATED ON x = {eval}[/]"
-            if eval is not None
+            + f"[bold green] EVALUATED ON x = {evaluate}[/]"
+            if evaluate is not None
             else ""
         )
         console.print(
@@ -181,30 +178,31 @@ def legendre_bench_command(
         df.to_csv(csv + ".csv", encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df, eval is not None)
+        plot_results(df, evaluate is not None)
 
     raise typer.Exit()
 
 
-def calculate_legendre(n: int, eval: float | None, use_legendre_def: bool, store: bool):
+def calculate_legendre(n: int, evaluate: float | None, use_legendre_def: bool, store: bool):
     if store:
         # Reset the store to avoid following calculations to be faster than expected
         legendre_store.reset(definition=use_legendre_def, recursion=not use_legendre_def)
     for i in range(n + 1):
         if use_legendre_def:
-            legendre_def(i, eval=eval, store=store)
+            legendre_def(i, eval=evaluate, store=store)
         else:
-            legendre_rec(i, eval=eval, store=store)
+            legendre_rec(i, eval=evaluate, store=store)
 
 
-def calculate_legendre_exp(n: int, eval: float | None):
+def calculate_legendre_exp(n: int, evaluate: float | None):
     for i in range(n + 1):
-        legendre_exp(i, eval=eval)
+        legendre_exp(i, eval=evaluate)
 
 
-def plot_results(df: pd.DataFrame, eval: bool):
+def plot_results(df: pd.DataFrame, evaluate: bool):
     df["N"] = df["N"].astype(int)
     columns = df.columns[1:]
+    console.print(columns)
     plt.figure(figsize=(10, 6))
 
     something_to_plot = False
@@ -232,7 +230,9 @@ def plot_results(df: pd.DataFrame, eval: bool):
         raise ValueError("Not enough data to plot.")
     plt.xlabel("First N polynomials")
     plt.ylabel("Time (s)")
-    plt.title(f"{'Evaluation' if eval else 'Calculation'} of Legendre polynomials $P_n(x)$")
+    plt.title(
+        f"{'Evaluation' if evaluate else 'Calculation'} of Legendre polynomials $P_n(x)$"
+    )
     plt.legend()
     plt.grid(True)
     plt.show()

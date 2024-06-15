@@ -58,7 +58,7 @@ def legendre_command(
 
     # Convert the input to a list of integers
     try:
-        n_values = [int(value) for value in n.split(",")]
+        n_values: List[int] = [int(value) for value in n.split(",")]
         if any(i < 0 for i in n_values):
             raise typer.BadParameter("All integers must be greater or equal to 0.")
     except ValueError:
@@ -66,18 +66,15 @@ def legendre_command(
             "n must be an integer or a comma-separated list of integers."
         )
 
-    x_values = []
-    if evaluate is not None and evaluate != "":
-        try:
-            if isinstance(evaluate, float):
-                x_values.append(evaluate)
-            else:
-                for value in evaluate.split(","):
-                    x_values.append(float(value))
-        except ValueError:
-            raise typer.BadParameter(
-                "x must either be a number or a list of numbers separated by commas."
-            )
+    x_values: List[float] = []
+    if evaluate is not None:
+        for value in evaluate.split(","):
+            try:
+                x_values.append(float(value))
+            except ValueError:
+                raise typer.BadParameter(
+                    "eval must either be a number or a list of numbers separated by commas."
+                )
 
     if display_time:
         t_start = time()

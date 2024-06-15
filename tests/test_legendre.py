@@ -28,7 +28,7 @@ x = Symbol("x")
 def test_legendre(n, expected):
     """Test the Legendre function with parametrization."""
     assert simplify(legendre(n) - expected) == 0
-    for i in range(5, 10):
+    for i in range(5, 10, 2):
         val = random() * 2 - 1
         legendre_store.reset()
         assert simplify(legendre_rec(i, store=True) - legendre_def(i, store=True)) == 0

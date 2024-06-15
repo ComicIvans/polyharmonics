@@ -28,7 +28,7 @@ def associated_legendre_bench_command(
         Either a pair of integers separated by ':' or a comma-separated list of such pairs.""",  # noqa: E501
         metavar="SUB:SUP",
     ),
-    eval: float = typer.Option(
+    evaluate: float = typer.Option(
         None,
         "--eval",
         case_sensitive=False,
@@ -56,8 +56,8 @@ def associated_legendre_bench_command(
 ) -> None:
     """Benchmark the calculation of associated Legendre functions and display the time taken."""  # noqa: E501
 
+    nm_values: List[Tuple[int, int]] = []
     try:
-        nm_values: List[Tuple[int, int]] = []
         for value in nm.split(","):
             n, m = value.split(":")
             if n is None or m is None or n == "" or m == "":
@@ -96,46 +96,46 @@ def associated_legendre_bench_command(
             tests = [
                 {
                     "fun": calculate_associated_legendre,
-                    "args": (n, m, eval, True, False, True),
+                    "args": (n, m, evaluate, True, False, True),
                     "text": (
-                        "Calculating "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
                         "with the definition and storage."
                     ),
                 },
                 {
                     "fun": calculate_associated_legendre,
-                    "args": (n, m, eval, True, False, False),
+                    "args": (n, m, evaluate, True, False, False),
                     "text": (
-                        "Calculating "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
                         "with the definition but no storage."
                     ),
                 },
                 {
                     "fun": calculate_associated_legendre,
-                    "args": (n, m, eval, False, False, True),
+                    "args": (n, m, evaluate, False, False, True),
                     "text": (
-                        "Calculating "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
                         "with the recursion and storage."
                     ),
                 },
                 {
                     "fun": calculate_associated_legendre,
-                    "args": (n, m, eval, False, False, False),
+                    "args": (n, m, evaluate, False, False, False),
                     "text": (
-                        "Calculating "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
                         "with the recursion but no storage."
                     ),
                 },
                 {
                     "fun": calculate_associated_legendre,
-                    "args": (n, m, eval, False, True, False),
+                    "args": (n, m, evaluate, False, True, False),
                     "text": (
-                        "Calculating "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}(x) "
+                        f"{'Calculating' if evaluate is None else 'Evaluating'} "
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
                         "with the alternative recursion."
                     ),
                 },
@@ -177,7 +177,7 @@ def associated_legendre_bench_command(
         df.to_csv(csv + ".csv", encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df, eval is not None)
+        plot_results(df, evaluate is not None)
 
     raise typer.Exit()
 
@@ -185,7 +185,7 @@ def associated_legendre_bench_command(
 def calculate_associated_legendre(
     n: int,
     m: int,
-    eval: float | None,
+    evaluate: float | None,
     use_def: bool,
     use_alt_rec: bool,
     store: bool,
@@ -197,20 +197,20 @@ def calculate_associated_legendre(
             recursion=not use_def,
         )
     if use_alt_rec:
-        associated_legendre_rec_alt(n, m, eval=eval)
+        associated_legendre_rec_alt(n, m, eval=evaluate)
     else:
         if use_def:
-            associated_legendre_def(n, m, eval=eval, store=store)
+            associated_legendre_def(n, m, eval=evaluate, store=store)
         else:
-            associated_legendre_rec(n, m, eval=eval, store=store)
+            associated_legendre_rec(n, m, eval=evaluate, store=store)
 
 
-def plot_results(df: pd.DataFrame, eval: bool):
+def plot_results(df: pd.DataFrame, evaluate: bool):
     df[["N", "M"]] = df["N:M"].str.split(":", expand=True)
     df["N"] = df["N"].astype(int)
     df["M"] = df["M"].astype(int)
 
-    columns = df.columns[1:4]
+    columns = df.columns[1:-2]
     for col in columns:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
@@ -232,7 +232,7 @@ def plot_results(df: pd.DataFrame, eval: bool):
         plt.xlabel("N")
         plt.ylabel("M")
         plt.title(
-            f"{'Evaluation' if eval else 'Calculation'} of associated Legendre functions $P_n^m(x)$ - {label}"  # noqa: E501
+            f"{'Evaluation' if evaluate else 'Calculation'} of associated Legendre functions $P_n^m(x)$ - {label}"  # noqa: E501
         )
         plt.grid(True)
 

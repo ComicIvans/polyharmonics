@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import typer
 from rich.console import Console
-from sympy import Expr, Symbol, acos, latex, limit, pretty
+from sympy import Expr, latex, pretty
 
 from polyharmonics import associated_legendre
 
@@ -11,8 +11,6 @@ from .colors import Color
 
 SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 SUP = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
-X = Symbol("x")
-th = Symbol("θ")
 console = Console()
 
 
@@ -68,8 +66,8 @@ def associated_legendre_command(
 
     # Convert the input to two lists of integers
     try:
-        n_values = []
-        m_values = []
+        n_values: List[int] = []
+        m_values: List[int] = []
         for value in nm.split(","):
             n, m = value.split(":")
             if n is None or m is None or n == "" or m == "":
@@ -86,18 +84,15 @@ def associated_legendre_command(
             "nm must either be a pair of integers separated by ':' or a list of such pairs separated by commas."  # noqa: E501
         )
 
-    x_values = []
-    if evaluate is not None and evaluate != "":
-        try:
-            if isinstance(evaluate, float):
-                x_values.append(evaluate)
-            else:
-                for value in evaluate.split(","):
-                    x_values.append(float(value))
-        except ValueError:
-            raise typer.BadParameter(
-                "x must either be a number or a list of numbers separated by commas."
-            )
+    x_values: List[float] = []
+    if evaluate is not None:
+        for value in evaluate.split(","):
+            try:
+                x_values.append(float(value))
+            except ValueError:
+                raise typer.BadParameter(
+                    "eval must either be a number or a list of numbers separated by commas."
+                )
 
     if display_time:
         t_start = time()
@@ -131,7 +126,9 @@ def associated_legendre_command(
     for n, m, fun in zip(n_values, m_values, result):
         if print_latex:
             if polar:
-                console.print(f"[bold {color}]P_{n}^{m}(cos(θ)) = {latex(fun)}[/]\n")
+                console.print(
+                    f"[bold {color}]P_{n}^{m}(\\cos(\\theta)) = {latex(fun)}[/]\n"
+                )
             else:
                 console.print(f"[bold {color}]P_{n}^{m}(x) = {latex(fun)}[/]\n")
         elif x_values:

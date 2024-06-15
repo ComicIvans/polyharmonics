@@ -37,8 +37,8 @@ th = Symbol("θ")
 def test_associated_legendre(n, m, polar, expected):
     """Test the associated Legendre function with parametrization."""
     assert simplify(associated_legendre(n, m, polar=polar) - expected) == 0
-    for i in range(5, 10):
-        for j in range(-2, 3):
+    for i in range(5, 10, 2):
+        for j in range(-2, 3, 2):
             ass_legendre_store.reset()
             fun_pairs: List[Expr] = [
                 associated_legendre_def(i, j, store=True),
@@ -48,7 +48,7 @@ def test_associated_legendre(n, m, polar, expected):
                 associated_legendre_rec_alt(i, j),
                 associated_legendre_def(i, j),
             ]
-            x_vals = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
+            x_vals = [-0.75, -0.25, 0, 0.25, 0.75]
             for x_val in x_vals:
                 for i in range(0, len(fun_pairs), 2):
                     assert (

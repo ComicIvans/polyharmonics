@@ -5,6 +5,7 @@ from importlib import metadata as importlib_metadata
 
 from .associated_legendre_functions import associated_legendre
 from .legendre_polynomials import legendre
+from .spherical_harmonics import spherical_harmonic
 
 
 def get_version() -> str:

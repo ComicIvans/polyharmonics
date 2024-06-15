@@ -295,7 +295,7 @@ def associated_legendre(
         Expr: The Associated legendre function for the given subscript and superscript.
 
     Examples:
-        .. code:: python
+        ... code:: python
 
             >>> associated_legendre(1, 0)
             x

@@ -5,7 +5,12 @@ import typer
 from rich.console import Console
 
 from polyharmonics import __version__
-from polyharmonics.cli import associated_legendre_command, benchmark, legendre_command
+from polyharmonics.cli import (
+    associated_legendre_command,
+    benchmark,
+    legendre_command,
+    spherical_harmonic_command,
+)
 
 app = typer.Typer(
     name="polyharmonics",
@@ -38,6 +43,7 @@ def main(
 
 app.command(name="legendre")(legendre_command)
 app.command(name="associated-legendre")(associated_legendre_command)
+app.command(name="spherical-harmonic")(spherical_harmonic_command)
 app.add_typer(benchmark, name="benchmark")
 
 

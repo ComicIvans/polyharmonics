@@ -147,7 +147,7 @@ def legendre(n: int, eval: int | float | None = None) -> Expr:
         Expr: The Legendre polynomial of the given degree.
 
     Examples:
-        .. code:: python
+        ... code:: python
 
             >>> legendre(0)
             1
