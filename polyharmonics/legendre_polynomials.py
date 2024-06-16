@@ -1,8 +1,9 @@
+from math import cos as cosine
 from typing import List
 
-from sympy import Expr, Rational, diff, expand, factorial, floor, symbols
+from sympy import Expr, Rational, cos, diff, expand, factorial, floor, symbols
 
-x, t, k = symbols("x t k")
+x, t, k, th = symbols("x t k θ")
 gen_Legendre: Expr = (1 - 2 * x * t + t**2) ** Rational(-1, 2)
 
 
@@ -132,13 +133,14 @@ def legendre_exp(n: int, eval: float | None = None) -> Expr:
     return pol
 
 
-def legendre(n: int, eval: float | None = None) -> Expr:
+def legendre(n: int, polar: bool = False, eval: float | None = None) -> Expr:
     """
     Calculate the analytical expression of the Legendre polynomial.
 
     Args:
         n (int): The degree of the Legendre polynomial.
             Must be an integer greater than or equal to 0.
+        polar (bool): If True, the function is returned in polar coordinates.
         eval (float, None): The value at which the polynomial is evaluated.
             If None, the polynomial is returned as an expression.
             Default is None.
@@ -169,4 +171,10 @@ def legendre(n: int, eval: float | None = None) -> Expr:
             return 1
         elif eval == -1:
             return 1 if n % 2 == 0 else -1
-    return legendre_rec(n, eval=eval, store=False) if eval is not None else legendre_exp(n)
+    return (
+        legendre_rec(n, eval=cosine(eval) if polar else eval, store=False)
+        if eval is not None
+        else legendre_exp(n).subs(x, cos(th))
+        if polar
+        else legendre_exp(n)
+    )

@@ -1,3 +1,4 @@
+from math import cos as cosine
 from time import time
 from typing import List, Optional
 
@@ -48,6 +49,13 @@ def legendre_command(
         case_sensitive=False,
         help="Display the time taken to calculate the function(s).",
     ),
+    polar: bool = typer.Option(
+        False,
+        "-p",
+        "--polar",
+        case_sensitive=False,
+        help="Calculate the polynomial(s) with polar coordinates.",
+    ),
 ) -> None:
     """Calculate and print the Legendre polynomial(s)."""
 
@@ -91,10 +99,10 @@ def legendre_command(
     ):
         if x_values:
             result: List[List[float]] = [
-                [legendre(i, x) for x in x_values] for i in n_values
+                [legendre(i, eval=x, polar=polar) for x in x_values] for i in n_values
             ]
         else:
-            result: List[Expr] = [legendre(i) for i in n_values]
+            result: List[Expr] = [legendre(i, polar=polar) for i in n_values]
 
     if display_time:
         t_end = time()
@@ -104,14 +112,17 @@ def legendre_command(
 
     for n, pol in zip(n_values, result):
         if print_latex:
-            console.print(f"[bold {color}]P_{n}(x) = {latex(pol)}[/]\n")
+            cos_theta = "cos(\\theta)" if polar else "x"
+            console.print(f"[bold {color}]P_{n}({cos_theta}) = {latex(pol)}[/]\n")  # noqa: E501
         elif x_values:
             for i, x in enumerate(x_values):
                 console.print(
-                    f"[bold {color}]P{str(n).translate(SUB)}({x}) = {pol[i]}[/]\n"
+                    f"[bold {color}]P{str(n).translate(SUB)}({cosine(x) if polar else x}) = {pol[i]}[/]\n"  # noqa: E501
                 )
         else:
-            console.print(f"[bold {color}]P{str(n).translate(SUB)}(x) = [/]")
+            console.print(
+                f"[bold {color}]P{str(n).translate(SUB)}({'cos(θ)' if polar else 'x'}) = [/]"  # noqa: E501
+            )  # noqa: E501
             console.print(f"[bold {color}] {pretty(pol)}[/]\n")
 
     raise typer.Exit()

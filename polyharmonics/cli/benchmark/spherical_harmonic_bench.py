@@ -58,7 +58,7 @@ def spherical_harmonic_bench_command(
             n, m = value.split(":")
             if n is None or m is None or n == "" or m == "":
                 raise typer.BadParameter(
-                    "Between each ',' must be a pair of integers separated by ':'."  # noqa: E501
+                    "nm must either be a pair of integers separated by ':' or a list of such pairs separated by commas."  # noqa: E501
                 )
             else:
                 nm_values.append((int(n), int(m)))
