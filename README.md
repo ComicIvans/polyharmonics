@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![PyPI](https://img.shields.io/pypi/v/polyharmonics)
+[![PyPI](https://img.shields.io/pypi/v/polyharmonics)](https://pypi.org/project/polyharmonics/)
 [![Python Version](https://img.shields.io/pypi/pyversions/polyharmonics.svg)](https://pypi.org/project/polyharmonics/)
 [![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg)](https://github.com/ComicIvans/polyharmonics/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)
 
