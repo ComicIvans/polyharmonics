@@ -13,7 +13,7 @@ def spherical_harmonic(
     eval: Tuple[float, float] | None = None,
 ) -> Expr:
     """
-    Calculate the analytical expression of the spherical harmonic
+    Calculate the analytical expression of the spherical harmonic.
 
     Args:
         n (int): The subscript of the function.

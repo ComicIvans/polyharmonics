@@ -1,3 +1,4 @@
+from math import cos as cosine
 from typing import Dict, List
 
 from sympy import (
@@ -62,7 +63,7 @@ def associated_legendre_def(
         if eval is None:
             return legendre(n).subs(x, cos(th)) if polar else legendre(n)
         else:
-            return legendre(n, eval=cos(eval)) if polar else legendre(n, eval=eval)
+            return legendre(n, eval=cosine(eval)) if polar else legendre(n, eval=eval)
 
     fun: Expr = None
     if store:
@@ -279,7 +280,7 @@ def associated_legendre(
     eval: float | None = None,
 ) -> Expr:
     """
-    Calculate the analytical expression of the Associated legendre function
+    Calculate the analytical expression of the Associated legendre function.
 
     Args:
         n (int): The subscript of the function.
@@ -310,11 +311,10 @@ def associated_legendre(
         eval = float(eval)
     if eval is not None and not isinstance(eval, float):
         raise TypeError("eval must be a number or None")
-    if m != 0 and eval is not None:
-        if eval == 1 or eval == -1:
-            return 0
+    if m != 0 and (eval == 1 or eval == -1):
+        return 0
     return (
         associated_legendre_rec_alt(n, m, polar=polar, eval=eval)
         if m != 0 and (n / m < 8 or eval is not None)
-        else associated_legendre_def(n, m, polar=polar)
+        else associated_legendre_def(n, m, polar=polar, eval=eval)
     )

@@ -2,13 +2,13 @@ import time
 from multiprocessing import Process
 from typing import List, Tuple
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import typer
 from rich.console import Console
 from rich.status import Status
 from tabulate import tabulate
 
+from polyharmonics.cli.plotbench_cmd import plot_spherical_harmonic
 from polyharmonics.spherical_harmonics import spherical_harmonic
 
 SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
@@ -87,7 +87,7 @@ def spherical_harmonic_bench_command(
     with console.status(status="", spinner="dots") as status:
         status: Status
         headers = [
-            "N:M",
+            "Yₙᵐ" + (" eval" if evaluate is not None else " calc"),
             "Definition",
         ]
         df = pd.DataFrame(columns=headers)
@@ -106,13 +106,13 @@ def spherical_harmonic_bench_command(
                     ),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"Y{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"Y{str(n).translate(SUB)}{str(m).translate(SUP)}({'θ, φ' if evaluate is None else (evaluate[0] + ', ' + evaluate[1])}) "  # noqa: E501
                         "with the definition."
                     ),
                 },
             ]
             assert len(tests) == n_tests
-            row = {"N:M": f"{n}:{m}"}
+            row = {"Yₙᵐ" + (" eval" if evaluate is not None else " calc"): f"{n}:{m}"}
             for n_test, test in enumerate(tests):
                 status.update(f"[bold yellow1]{test['text']}[/]")
                 if timed_out[n_test]:
@@ -145,10 +145,12 @@ def spherical_harmonic_bench_command(
             )
         )
     else:
-        df.to_csv(csv + ".csv", encoding="utf-8", index=False)
+        if not csv.endswith(".csv"):
+            csv += ".csv"
+        df.to_csv(csv, encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df, evaluate is not None)
+        plot_spherical_harmonic(df, evaluate is not None)
 
     raise typer.Exit()
 
@@ -159,40 +161,3 @@ def calculate_spherical_harmonic(
     evaluate: Tuple[float, float],
 ) -> None:
     spherical_harmonic(n, m, eval=evaluate)
-
-
-def plot_results(df: pd.DataFrame, evaluate: bool):
-    df[["N", "M"]] = df["N:M"].str.split(":", expand=True)
-    df["N"] = df["N"].astype(int)
-    df["M"] = df["M"].astype(int)
-
-    columns = df.columns[1:-2]
-    for col in columns:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    max_limit = max(df["N"].max(), df["M"].max()) + 10
-
-    for i, label in enumerate(columns):
-        plt.figure(figsize=(10, 6))
-        scatter = plt.scatter(
-            df["N"],
-            df["M"],
-            c=df[label],
-            cmap="RdYlGn_r",
-            s=100,
-            alpha=0.7,
-        )
-        cbar = plt.colorbar(scatter)
-        cbar.set_label("Time (s)")
-
-        plt.xlabel("N")
-        plt.ylabel("M")
-        plt.title(
-            f"{'Evaluation' if evaluate else 'Calculation'} of spherical harmonics $Y_n^m(θ, φ)$ - {label}"  # noqa: E501
-        )
-        plt.grid(True)
-
-        plt.xlim(0, max_limit)
-        plt.ylim(0, max_limit)
-
-        plt.show()

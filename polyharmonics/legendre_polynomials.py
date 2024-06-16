@@ -132,14 +132,14 @@ def legendre_exp(n: int, eval: float | None = None) -> Expr:
     return pol
 
 
-def legendre(n: int, eval: int | float | None = None) -> Expr:
+def legendre(n: int, eval: float | None = None) -> Expr:
     """
-    Calculate the analytical expression of the Legendre polynomial
+    Calculate the analytical expression of the Legendre polynomial.
 
     Args:
         n (int): The degree of the Legendre polynomial.
             Must be an integer greater than or equal to 0.
-        eval (int, float, None): The value at which the polynomial is evaluated.
+        eval (float, None): The value at which the polynomial is evaluated.
             If None, the polynomial is returned as an expression.
             Default is None.
 

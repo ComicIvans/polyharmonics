@@ -1,14 +1,13 @@
 import time
 from multiprocessing import Process
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import typer
 from rich.console import Console
 from rich.status import Status
 from tabulate import tabulate
 
+from polyharmonics.cli.plotbench_cmd import plot_legendre
 from polyharmonics.legendre_polynomials import (
     legendre_def,
     legendre_exp,
@@ -70,7 +69,7 @@ def legendre_bench_command(
     with console.status(status="", spinner="dots") as status:
         status: Status
         headers = [
-            "N",
+            "Pₙ" + (" eval" if evaluate is not None else " calc"),
             "Definition w storage",
             "Definition w/o storage",
             "Recursion w storage",
@@ -137,7 +136,7 @@ def legendre_bench_command(
                 },
             ]
             assert len(tests) == n_tests
-            row = {"N": i}
+            row = {"Pₙ" + (" eval" if evaluate is not None else " calc"): i}
             for n_test, test in enumerate(tests):
                 status.update(f"[yellow1]{test['text']}[/]")
                 if timed_out[n_test]:
@@ -175,10 +174,12 @@ def legendre_bench_command(
             )
         )
     else:
-        df.to_csv(csv + ".csv", encoding="utf-8", index=False)
+        if not csv.endswith(".csv"):
+            csv += ".csv"
+        df.to_csv(csv, encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df, evaluate is not None)
+        plot_legendre(df, evaluate is not None)
 
     raise typer.Exit()
 
@@ -197,42 +198,3 @@ def calculate_legendre(n: int, evaluate: float | None, use_legendre_def: bool, s
 def calculate_legendre_exp(n: int, evaluate: float | None):
     for i in range(n + 1):
         legendre_exp(i, eval=evaluate)
-
-
-def plot_results(df: pd.DataFrame, evaluate: bool):
-    df["N"] = df["N"].astype(int)
-    columns = df.columns[1:]
-    console.print(columns)
-    plt.figure(figsize=(10, 6))
-
-    something_to_plot = False
-    for col in columns:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-        clean_df = df.dropna(subset=[col])
-        if clean_df[col].count() > 2:
-            something_to_plot = True
-            scatter = plt.scatter(clean_df["N"], clean_df[col], label=col)
-            x = clean_df["N"]
-            y = clean_df[col]
-            try:
-                X_ = np.linspace(x.min(), x.max(), 500)
-                coeff = np.polyfit(x, y, 3)
-                Y_ = np.polyval(coeff, X_)
-
-                # Ensure the curve is monotonically increasing
-                Y_ = np.maximum.accumulate(Y_)
-
-                plt.plot(X_, Y_, linestyle="--", color=scatter.get_facecolor()[0])
-            except ValueError as e:
-                print(f"Could not fit curve for {col}: {e}")
-
-    if not something_to_plot:
-        raise ValueError("Not enough data to plot.")
-    plt.xlabel("First N polynomials")
-    plt.ylabel("Time (s)")
-    plt.title(
-        f"{'Evaluation' if evaluate else 'Calculation'} of Legendre polynomials $P_n(x)$"
-    )
-    plt.legend()
-    plt.grid(True)
-    plt.show()

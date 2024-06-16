@@ -9,6 +9,9 @@ from polyharmonics.cli import (
     associated_legendre_command,
     benchmark,
     legendre_command,
+    plot2d_command,
+    plot3d_command,
+    plotbench_command,
     spherical_harmonic_command,
 )
 
@@ -44,6 +47,9 @@ def main(
 app.command(name="legendre")(legendre_command)
 app.command(name="associated-legendre")(associated_legendre_command)
 app.command(name="spherical-harmonic")(spherical_harmonic_command)
+app.command(name="plot2d")(plot2d_command)
+app.command(name="plot3d")(plot3d_command)
+app.command(name="plotbench")(plotbench_command)
 app.add_typer(benchmark, name="benchmark")
 
 

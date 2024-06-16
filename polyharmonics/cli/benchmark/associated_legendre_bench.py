@@ -2,7 +2,6 @@ import time
 from multiprocessing import Process
 from typing import List, Tuple
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import typer
 from rich.console import Console
@@ -15,6 +14,7 @@ from polyharmonics.associated_legendre_functions import (
     associated_legendre_rec,
     associated_legendre_rec_alt,
 )
+from polyharmonics.cli.plotbench_cmd import plot_associated_legendre
 
 SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 SUP = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
@@ -62,7 +62,7 @@ def associated_legendre_bench_command(
             n, m = value.split(":")
             if n is None or m is None or n == "" or m == "":
                 raise typer.BadParameter(
-                    "Between each ',' must be a pair of integers separated by ':'."  # noqa: E501
+                    "nm must either be a pair of integers separated by ':' or a list of such pairs separated by commas."  # noqa: E501
                 )
             else:
                 nm_values.append((int(n), int(m)))
@@ -80,7 +80,7 @@ def associated_legendre_bench_command(
     with console.status(status="", spinner="dots") as status:
         status: Status
         headers = [
-            "N:M",
+            "Pₙᵐ" + (" eval" if evaluate is not None else " calc"),
             "Definition w storage",
             "Definition w/o storage",
             "Recursion w storage",
@@ -99,7 +99,7 @@ def associated_legendre_bench_command(
                     "args": (n, m, evaluate, True, False, True),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the definition and storage."
                     ),
                 },
@@ -108,7 +108,7 @@ def associated_legendre_bench_command(
                     "args": (n, m, evaluate, True, False, False),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the definition but no storage."
                     ),
                 },
@@ -117,7 +117,7 @@ def associated_legendre_bench_command(
                     "args": (n, m, evaluate, False, False, True),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the recursion and storage."
                     ),
                 },
@@ -126,7 +126,7 @@ def associated_legendre_bench_command(
                     "args": (n, m, evaluate, False, False, False),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the recursion but no storage."
                     ),
                 },
@@ -135,13 +135,13 @@ def associated_legendre_bench_command(
                     "args": (n, m, evaluate, False, True, False),
                     "text": (
                         f"{'Calculating' if evaluate is None else 'Evaluating'} "
-                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}{'x' if evaluate is None else evaluate} "  # noqa: E501
+                        f"P{str(n).translate(SUB)}{str(m).translate(SUP)}({'x' if evaluate is None else evaluate}) "  # noqa: E501
                         "with the alternative recursion."
                     ),
                 },
             ]
             assert len(tests) == n_tests
-            row = {"N:M": f"{n}:{m}"}
+            row = {"Pₙᵐ" + (" eval" if evaluate is not None else " calc"): f"{n}:{m}"}
             for n_test, test in enumerate(tests):
                 status.update(f"[bold yellow1]{test['text']}[/]")
                 if timed_out[n_test]:
@@ -174,10 +174,12 @@ def associated_legendre_bench_command(
             )
         )
     else:
-        df.to_csv(csv + ".csv", encoding="utf-8", index=False)
+        if not csv.endswith(".csv"):
+            csv += ".csv"
+        df.to_csv(csv, encoding="utf-8", index=False)
 
     if plot:
-        plot_results(df, evaluate is not None)
+        plot_associated_legendre(df, evaluate is not None)
 
     raise typer.Exit()
 
@@ -203,40 +205,3 @@ def calculate_associated_legendre(
             associated_legendre_def(n, m, eval=evaluate, store=store)
         else:
             associated_legendre_rec(n, m, eval=evaluate, store=store)
-
-
-def plot_results(df: pd.DataFrame, evaluate: bool):
-    df[["N", "M"]] = df["N:M"].str.split(":", expand=True)
-    df["N"] = df["N"].astype(int)
-    df["M"] = df["M"].astype(int)
-
-    columns = df.columns[1:-2]
-    for col in columns:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    max_limit = max(df["N"].max(), df["M"].max()) + 10
-
-    for i, label in enumerate(columns):
-        plt.figure(figsize=(10, 6))
-        scatter = plt.scatter(
-            df["N"],
-            df["M"],
-            c=df[label],
-            cmap="RdYlGn_r",
-            s=100,
-            alpha=0.7,
-        )
-        cbar = plt.colorbar(scatter)
-        cbar.set_label("Time (s)")
-
-        plt.xlabel("N")
-        plt.ylabel("M")
-        plt.title(
-            f"{'Evaluation' if evaluate else 'Calculation'} of associated Legendre functions $P_n^m(x)$ - {label}"  # noqa: E501
-        )
-        plt.grid(True)
-
-        plt.xlim(0, max_limit)
-        plt.ylim(0, max_limit)
-
-        plt.show()
