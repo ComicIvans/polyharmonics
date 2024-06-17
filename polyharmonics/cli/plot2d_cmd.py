@@ -129,11 +129,11 @@ def plot2d_command(
     plt.figure(figsize=(10, 6))
 
     for n in n_values:
-        y = [legendre(n, eval=xi, polar=polar) for xi in x]
+        y = legendre(n, eval=x, polar=polar)
         plt.plot(x, y, label=f"$P_{n}(x)$")
 
     for n, m in nm_values:
-        y = [associated_legendre(n, m, eval=xi, polar=polar) for xi in x]
+        y = associated_legendre(n, m, eval=x, polar=polar)
         plt.plot(x, y, label=f"$P_{n}^{m}(x)$")
 
     if title:

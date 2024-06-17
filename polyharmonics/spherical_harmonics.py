@@ -1,5 +1,9 @@
-from typing import Tuple
+from cmath import exp as cexp
+from math import factorial as fact
+from math import pi as pi_num
+from math import sqrt
 
+import numpy as np
 from sympy import Expr, I, Rational, Symbol, exp, factorial, pi
 
 from .associated_legendre_functions import associated_legendre
@@ -10,8 +14,9 @@ PHI = Symbol("φ")
 def spherical_harmonic(
     n: int,
     m: int,
-    eval: Tuple[float, float] | None = None,
-) -> Expr:
+    th: int | float | np.ndarray | None = None,
+    phi: int | float | np.ndarray | None = None,
+) -> Expr | float | complex | np.ndarray:
     """
     Calculate the analytical expression of the spherical harmonic.
 
@@ -20,12 +25,15 @@ def spherical_harmonic(
             Must be an integer greater than or equal to 0.
         m (int): The superscript of the function.
             Must be an integer.
-        eval Tuple[float, float] | None: The values (θ, φ) at which the function is evaluated.
+        th (int, float, np.ndarray, None): The value(s) at which the function is evaluated.
+            If None, the function is returned as an expression.
+            Default is None.
+        phi (int, float, np.ndarray, None): The value(s) at which the function is evaluated.
             If None, the function is returned as an expression.
             Default is None.
 
     Returns:
-        Expr: The spherical harmonic for the given subscript and superscript.
+        Expr | float | complex | np.ndarray: The spherical harmonic for the given subscript and superscript.
 
     Examples:
         ... code:: python
@@ -39,31 +47,35 @@ def spherical_harmonic(
         raise TypeError("n and m must both be integers")
     if n < 0:
         raise ValueError("n must be greater than or equal to 0")
-    if eval is not None:
-        if not (isinstance(eval, tuple) or len(eval) == 2):
-            raise ValueError("eval must be a tuple (θ, φ) of numbers or None")
-        else:
-            try:
-                eval = tuple(float(x) for x in eval)
-            except ValueError:
-                raise ValueError("eval must be a tuple (θ, φ) of numbers.")
 
-        th, phi = eval
-        if m != 0 and (th == 0 or th == pi):
-            return 0
+    if (th is not None and phi is None) or (th is None and phi is not None):
+        raise ValueError("th and phi must both be provided or both be None")
+
+    if th is not None:
+        coeff = sqrt((2 * n + 1) / (4 * pi_num) * fact(n - m) / fact(n + m))
+        if not isinstance(th, (int, float)) or not isinstance(phi, (int, float)):
+            try:
+                th = np.asarray(th, dtype=float)
+                phi = np.asarray(phi, dtype=float)
+                if th.shape != phi.shape:
+                    raise ValueError("th and phi must have the same shape")
+            except ValueError:
+                raise TypeError("th and phi must be numbers, arrays of numbers or None")
+            return (
+                coeff
+                * associated_legendre(n, m, polar=True, eval=th)
+                * np.exp(1j * m * phi)
+            )
         else:
             return (
-                (1 if m % 2 == 0 else -1)
-                * ((2 * n + 1) / (4 * pi) * factorial(n - m) / factorial(n + m))
-                ** Rational(1 / 2)
-                * associated_legendre(n, m, polar=True, eval=th)
-                * exp(I * m * phi)
+                coeff * associated_legendre(n, m, polar=True, eval=th) * cexp(1j * m * phi)
             )
     else:
         return (
-            (1 if m % 2 == 0 else -1)
-            * ((2 * n + 1) / (4 * pi) * factorial(n - m) / factorial(n + m))
-            ** Rational(1 / 2)
+            (
+                ((2 * n + 1) / (4 * pi) * factorial(n - m) / factorial(n + m))
+                ** Rational(1, 2)
+            )
             * associated_legendre(n, m, polar=True)
             * exp(I * m * PHI)
         )

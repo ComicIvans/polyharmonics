@@ -24,7 +24,7 @@ th = Symbol("θ")
         (2, 2, True, 3 * sin(th) ** 2),
         (3, 2, True, 15 * cos(th) * sin(th) ** 2),
         (10, 100, False, 0),
-        (1, -1, False, -2 * (1 - x**2) ** Rational(1, 2)),
+        (1, -1, False, -((1 - x**2) ** Rational(1, 2)) / 2),
         (4, 4, False, 105 * x**4 - 210 * x**2 + 105),
         (
             3,

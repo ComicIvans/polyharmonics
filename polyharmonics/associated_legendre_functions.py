@@ -1,6 +1,9 @@
 from math import cos as cosine
+from math import factorial as fact
+from math import pow, sqrt
 from typing import Dict, List
 
+import numpy as np
 from sympy import (
     Expr,
     Rational,
@@ -41,31 +44,46 @@ def associated_legendre_def(
     n: int,
     m: int,
     polar: bool = False,
-    eval: float | None = None,
+    eval: int | float | np.ndarray | None = None,
     store: bool = True,
 ):
     if abs(m) > n:
-        return x * 0
+        return x * 0 if eval is None else 0 * eval
     elif m < 0:
-        return (
-            (1 if m % 2 == 0 else -1)
-            * factorial(n - m)
-            / factorial(n + m)
-            * associated_legendre_def(
-                n,
-                -m,
-                polar=polar,
-                eval=eval,
-                store=store,
+        m = -m
+        if eval is None:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * factorial(n - m)
+                / factorial(n + m)
+                * associated_legendre_def(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                    store=store,
+                )
             )
-        )
+        else:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * fact(n - m)
+                / fact(n + m)
+                * associated_legendre_def(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                    store=store,
+                )
+            )
     elif m == 0:
         if eval is None:
-            return legendre(n).subs(x, cos(th)) if polar else legendre(n)
+            return legendre(n, polar=polar)
         else:
-            return legendre(n, eval=cosine(eval)) if polar else legendre(n, eval=eval)
+            return legendre(n, eval=eval, polar=polar)
 
-    fun: Expr = None
+    fun: Expr
     if store:
         if n not in ass_legendre_store.definition:
             ass_legendre_store.definition[n] = [legendre(n)]
@@ -84,34 +102,60 @@ def associated_legendre_def(
             )
         )
 
-    if polar:
+    if eval is None:
         return (
             trigsimp(fun.subs((1 - x**2) ** Rational(1, 2), sin(th)).subs(x, cos(th)))
-            if eval is None
-            else fun.subs((1 - x**2) ** Rational(1, 2), sin(th))
-            .subs(x, cos(th))
-            .subs(th, eval)
+            if polar
+            else fun
         )
     else:
-        return fun if eval is None else fun.subs(x, eval)
+        if isinstance(eval, (int, float)):
+            if polar:
+                eval = cosine(eval)
+            return float(fun.subs(x, eval))
+        else:
+            if polar:
+                eval = np.cos(eval)
+            return np.vectorize(lambda val: float(fun.subs(x, val)))(eval)
 
 
 def associated_legendre_rec(
     n: int,
     m: int,
     polar: bool = False,
-    eval: bool | None = None,
+    eval: int | float | np.ndarray | None = None,
     store: bool = True,
 ):
     if abs(m) > n:
-        return x * 0
+        return x * 0 if eval is None else 0 * eval
     elif m < 0:
-        return (
-            (1 if m % 2 == 0 else -1)
-            * factorial(n - m)
-            / factorial(n + m)
-            * associated_legendre_rec(n, -m, polar=polar, eval=eval, store=store)
-        )
+        m = -m
+        if eval is None:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * factorial(n - m)
+                / factorial(n + m)
+                * associated_legendre_rec(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                    store=store,
+                )
+            )
+        else:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * fact(n - m)
+                / fact(n + m)
+                * associated_legendre_rec(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                    store=store,
+                )
+            )
     elif m == 0 or m == 1:
         return associated_legendre_def(n, m, polar=polar, eval=eval, store=store)
     else:
@@ -142,37 +186,33 @@ def associated_legendre_rec(
                         log=False,
                     ),
                 )
-            if polar:
+            if eval is None:
                 return (
                     trigsimp(
                         ass_legendre_store.recursion[n][m]
                         .subs((1 - x**2) ** Rational(1, 2), sin(th))
                         .subs(x, cos(th))
                     )
-                    if eval is None
+                    if polar
                     else ass_legendre_store.recursion[n][m]
-                    .subs((1 - x**2) ** Rational(1, 2), sin(th))
-                    .subs(x, cos(th))
-                    .subs(th, eval)
                 )
             else:
-                return (
-                    ass_legendre_store.recursion[n][m]
-                    if eval is None
-                    else ass_legendre_store.recursion[n][m].subs(x, eval)
-                )
+                if isinstance(eval, (int, float)):
+                    if polar:
+                        eval = cosine(eval)
+                    return float(ass_legendre_store.recursion[n][m].subs(x, eval))
+                else:
+                    if polar:
+                        eval = np.cos(eval)
+                    return np.vectorize(
+                        lambda val: float(ass_legendre_store.recursion[n][m].subs(x, val))
+                    )(eval)
         else:
             if eval is not None and polar:
-                eval = cos(eval)
-            prev_fun: Expr = (
-                associated_legendre_rec(n, 0)
-                if eval is None
-                else associated_legendre_rec(n, 0, polar=polar, eval=eval)
-            )
-            curr_fun: Expr = (
-                associated_legendre_rec(n, 1)
-                if eval is None
-                else associated_legendre_rec(n, 1, polar=polar, eval=eval)
+                eval = cosine(eval) if isinstance(eval, (int, float)) else np.cos(eval)
+            prev_fun, curr_fun = (
+                associated_legendre_rec(n, 0, polar=polar and eval is not None, eval=eval),
+                associated_legendre_rec(n, 1, polar=polar and eval is not None, eval=eval),
             )
             for i in range(2, m + 1):
                 prev_fun, curr_fun = (
@@ -192,14 +232,22 @@ def associated_legendre_rec(
                         )
                         if eval is None
                         else (
-                            2 * (m - 1) * eval * (1 - eval**2) ** Rational(-1, 2) * curr_fun
+                            2
+                            * (m - 1)
+                            * eval
+                            * (
+                                sqrt(1 - eval**2)
+                                if isinstance(eval, (int, float))
+                                else np.sqrt(1 - eval**2)
+                            )
+                            * curr_fun
                             - (n + m - 1) * (n - m + 2) * prev_fun
                         )
                     ),
                 )
 
             if polar and eval is None:
-                curr_fun = trigsimp(
+                curr_fun: Expr = trigsimp(
                     curr_fun.subs((1 - x**2) ** Rational(1, 2), sin(th)).subs(x, cos(th))
                 )
             return curr_fun
@@ -209,44 +257,68 @@ def associated_legendre_rec_alt(
     n: int,
     m: int,
     polar: bool = False,
-    eval: float | None = None,
+    eval: int | float | np.ndarray | None = None,
 ):
     if abs(m) > n:
-        return x * 0
+        return x * 0 if eval is None else 0 * eval
     elif m == 0 or m == 1:
-        return associated_legendre_def(n, m, polar=polar, eval=eval, store=eval is None)
+        return associated_legendre_def(n, m, polar=polar, eval=eval, store=False)
     elif m < 0:
-        return (
-            (1 if m % 2 == 0 else -1)
-            * factorial(n - m)
-            / factorial(n + m)
-            * associated_legendre_rec_alt(n, -m, polar=polar, eval=eval)
-        )
+        m = -m
+        if eval is None:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * factorial(n - m)
+                / factorial(n + m)
+                * associated_legendre_rec_alt(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                )
+            )
+        else:
+            return (
+                (1 if m % 2 == 0 else -1)
+                * fact(n - m)
+                / fact(n + m)
+                * associated_legendre_rec_alt(
+                    n,
+                    m,
+                    polar=polar,
+                    eval=eval,
+                )
+            )
     else:
         if eval is not None and polar:
-            eval = cos(eval)
-        fun: Expr = expand(
-            (
-                factorial2(2 * m - 1) * (1 - x**2) ** Rational(m, 2)
-                if eval is None
-                else factorial2(2 * m - 1) * (1 - eval**2) ** Rational(m, 2)
-            ),
-            deep=True,
-            mul=True,
-            multinomial=False,
-            power_exp=False,
-            power_base=False,
-            log=False,
-        )
-        pos_fun: Expr = expand(
-            ((2 * m + 1) * x * fun if eval is None else (2 * m + 1) * eval * fun),
-            deep=True,
-            mul=True,
-            multinomial=False,
-            power_exp=False,
-            power_base=False,
-            log=False,
-        )
+            eval = cosine(eval) if isinstance(eval, (int, float)) else np.cos(eval)
+        fun, pos_fun = None, None
+        if eval is None:
+            fun: Expr = expand(
+                (factorial2(2 * m - 1) * (1 - x**2) ** Rational(m, 2)),
+                deep=True,
+                mul=True,
+                multinomial=False,
+                power_exp=False,
+                power_base=False,
+                log=False,
+            )
+            pos_fun: Expr = expand(
+                ((2 * m + 1) * x * fun),
+                deep=True,
+                mul=True,
+                multinomial=False,
+                power_exp=False,
+                power_base=False,
+                log=False,
+            )
+        else:
+            fun = float(factorial2(2 * m - 1)) * (
+                pow(1 - eval**2, m / 2)
+                if isinstance(eval, (int, float))
+                else np.power(1 - eval**2, m / 2)
+            )
+            pos_fun = (2 * m + 1) * eval * fun
         for i in range(m + 1, n):
             fun, pos_fun = (
                 pos_fun,
@@ -264,10 +336,10 @@ def associated_legendre_rec_alt(
                     else ((2 * i + 1) * eval * pos_fun - (i + m) * fun) / (i - m + 1)
                 ),
             )
-        if m == n:
+        if n == m:
             pos_fun = fun
         if polar and eval is None:
-            pos_fun = trigsimp(
+            pos_fun: Expr = trigsimp(
                 pos_fun.subs((1 - x**2) ** Rational(1, 2), sin(th)).subs(x, cos(th))
             )
         return pos_fun
@@ -277,10 +349,10 @@ def associated_legendre(
     n: int,
     m: int,
     polar: bool = False,
-    eval: float | None = None,
-) -> Expr:
+    eval: int | float | np.ndarray | None = None,
+) -> Expr | float | np.ndarray:
     """
-    Calculate the analytical expression of the Associated legendre function.
+    Calculate the analytical expression of the Associated Legendre function.
 
     Args:
         n (int): The subscript of the function.
@@ -288,12 +360,12 @@ def associated_legendre(
         m (int): The superscript of the function.
             Must be an integer.
         polar (bool): If True, the function is returned in polar coordinates.
-        eval (int, float, None): The value at which the function is evaluated.
+        eval (int, float, np.ndarray, None): The value(s) at which the function is evaluated.
             If None, the function is returned as an expression.
             Default is None.
 
     Returns:
-        Expr: The Associated legendre function for the given subscript and superscript.
+        Expr | float | np.ndarray: The Associated Legendre function for the given subscript and superscript.
 
     Examples:
         ... code:: python
@@ -303,18 +375,20 @@ def associated_legendre(
             >>> associated_legendre(1, 1, polar=True)
             sin(θ)
     """  # noqa: E501
-    if not isinstance(n, int) or not isinstance(m, int):
+    try:
+        n = int(n)
+        m = int(m)
+    except ValueError:
         raise TypeError("n and m must both be integers")
-    if n < 0:
-        raise ValueError("n must be greater than or equal to 0")
-    if isinstance(eval, int):
-        eval = float(eval)
-    if eval is not None and not isinstance(eval, float):
-        raise TypeError("eval must be a number or None")
-    if m != 0 and (eval == 1 or eval == -1):
-        return 0
-    return (
-        associated_legendre_rec_alt(n, m, polar=polar, eval=eval)
-        if m != 0 and (n / m < 8 or eval is not None)
-        else associated_legendre_def(n, m, polar=polar, eval=eval)
-    )
+
+    if eval is not None:
+        if not isinstance(eval, (int, float)):
+            try:
+                eval = np.asarray(eval, dtype=float)
+            except ValueError:
+                raise TypeError("eval must be a number, an ndarray, or None")
+
+    if m != 0 and (n / m < 8 or eval is not None):
+        return associated_legendre_rec_alt(n, m, polar=polar, eval=eval)
+    else:
+        return associated_legendre_def(n, m, polar=polar, eval=eval)

@@ -127,7 +127,7 @@ def associated_legendre_command(
         if print_latex:
             if polar:
                 console.print(
-                    f"[bold {color}]P_{n}^{m}(\\cos(\\theta)) = {latex(fun)}[/]\n"
+                    f"[bold {color}]P_{'{' + str(n) + '}'}^{'{' + str(m) + '}'}(\\cos(\\theta)) = {latex(fun)}[/]\n"  # noqa: E501
                 )
             else:
                 console.print(f"[bold {color}]P_{n}^{m}(x) = {latex(fun)}[/]\n")

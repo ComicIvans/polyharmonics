@@ -106,7 +106,7 @@ def spherical_harmonic_command(
         if th_values and phi_values:
             result: List[List[float]] = [
                 [
-                    spherical_harmonic(i, j, eval=(th, phi))
+                    spherical_harmonic(i, j, th=th, phi=phi)
                     for th, phi in zip(th_values, phi_values)
                 ]
                 for i, j in zip(n_values, m_values)

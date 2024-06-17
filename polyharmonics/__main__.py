@@ -48,7 +48,7 @@ app.command(name="legendre")(legendre_command)
 app.command(name="associated-legendre")(associated_legendre_command)
 app.command(name="spherical-harmonic")(spherical_harmonic_command)
 app.command(name="plot2d")(plot2d_command)
-app.command(name="plot3d")(plotsh_command)
+app.command(name="plotsh")(plotsh_command)
 app.command(name="plotbench")(plotbench_command)
 app.add_typer(benchmark, name="benchmark")
 

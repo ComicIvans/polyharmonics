@@ -1,4 +1,3 @@
-from math import cos as cosine
 from time import time
 from typing import List, Optional
 
@@ -113,11 +112,13 @@ def legendre_command(
     for n, pol in zip(n_values, result):
         if print_latex:
             cos_theta = "cos(\\theta)" if polar else "x"
-            console.print(f"[bold {color}]P_{n}({cos_theta}) = {latex(pol)}[/]\n")  # noqa: E501
+            console.print(
+                f"[bold {color}]P_{'{' + str(n) + '}'}({cos_theta}) = {latex(pol)}[/]\n"
+            )  # noqa: E501
         elif x_values:
             for i, x in enumerate(x_values):
                 console.print(
-                    f"[bold {color}]P{str(n).translate(SUB)}({cosine(x) if polar else x}) = {pol[i]}[/]\n"  # noqa: E501
+                    f"[bold {color}]P{str(n).translate(SUB)}({f'cos({x})' if polar else x}) = {pol[i]}[/]\n"  # noqa: E501
                 )
         else:
             console.print(
