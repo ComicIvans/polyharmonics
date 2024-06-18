@@ -68,19 +68,8 @@ def plotsh_command(
         ax.set_zlabel("Z")
         ax.set_title(f"Spherical Harmonic $Y_{'{' + str(n) + '}'}^{'{' + str(m) + '}'}$")
 
-        # Añadir barra de color
         color_bar = fig.colorbar(color_map, ax=ax, shrink=0.5, aspect=5, pad=0.1)
         color_bar.set_label("Real Part of Spherical Harmonic")
-
-        # Añadir descripción interpretativa
-        fig.text(
-            0.1,
-            0.02,
-            "The distance of the surface from the origin indicates the absolute value\n"
-            "of the function in angular direction.",
-            fontsize=10,
-            wrap=True,
-        )
 
         plt.show()
     raise typer.Exit()

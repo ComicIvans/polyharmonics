@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "polyharmonics"
-version = "0.8.0"
+version = "0.8.1"
 description = "Ortogonal polynomials in the unit sphere"
 readme = "README.md"
 authors = [
